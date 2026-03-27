@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 import { useNavigate } from "react-router-dom";
-
+import { useAuthStore } from "@/stores/useAuthStore";
 
 // validate
 const SigninSchema = z.object({
@@ -35,17 +35,14 @@ export default function SigninPage({
 
   const onSubmit = async (data: SigninFormValues) => {
     const { username, password } = data;
-
     await signin(username, password);
-
-    // giả lập redirect
     navigate("/dashboard");
   };
 
   return (
     <div
       className={cn(
-        "min-h-screen flex items-center justify-center px-4",
+        "w-[1440px] h-[1024px] mx-auto flex items-center justify-center",
         className
       )}
       style={{
@@ -54,23 +51,33 @@ export default function SigninPage({
       }}
       {...props}
     >
-      <div className="w-full max-w-[420px]">
-        {/* Title */}
-        <h1 className="text-[40px] font-bold text-center mb-10 text-[#851385]">
+      {/* Container */}
+      <div className="flex flex-col items-center w-full max-w-[520px]">
+
+        {/* LOGO */}
+        <img
+          src="https://res.cloudinary.com/dlzg0btqt/image/upload/f_auto,q_auto/Blue_and_White_Coding_Minimalist_Business_Agency_Logo_1_jmjwft"
+          alt="Logo"
+          className="w-[80px] h-[80px] object-contain mb-6 shadow-lg rounded-xl"
+        />
+
+        {/* TITLE */}
+        <h1 className="text-[95px] font-semibold leading-[100px] text-center mb-12 text-[#851385]">
           Đăng nhập vào
           <br />
           Code YourSelf
         </h1>
 
-        {/* Form */}
+        {/* FORM */}
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col gap-6"
+          className="flex flex-col gap-6 w-full"
         >
           {/* Username */}
           <div className="flex flex-col gap-2">
-            <Label>Tên đăng nhập</Label>
+            <Label className="text-base">Tên đăng nhập</Label>
             <Input
+              className="h-[60px] text-lg rounded-2xl bg-white shadow-md px-5"
               placeholder="Nhập email của bạn"
               {...register("username")}
             />
@@ -83,9 +90,10 @@ export default function SigninPage({
 
           {/* Password */}
           <div className="flex flex-col gap-2">
-            <Label>Mật khẩu</Label>
+            <Label className="text-base">Mật khẩu</Label>
             <Input
               type="password"
+              className="h-[60px] text-lg rounded-2xl bg-white shadow-md px-5"
               placeholder="Nhập mật khẩu của bạn"
               {...register("password")}
             />
@@ -97,13 +105,17 @@ export default function SigninPage({
           </div>
 
           {/* Button */}
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            className="h-[60px] text-lg font-semibold rounded-2xl bg-gradient-to-r from-purple-600 to-purple-800 hover:opacity-90 shadow-lg"
+            disabled={isSubmitting}
+          >
             Đăng nhập
           </Button>
         </form>
 
-        {/* Register */}
-        <p className="text-center text-sm mt-8">
+        {/* REGISTER */}
+        <p className="text-center text-base mt-6">
           Bạn chưa có tài khoản?{" "}
           <span className="font-semibold text-[#851385] cursor-pointer">
             Đăng ký
