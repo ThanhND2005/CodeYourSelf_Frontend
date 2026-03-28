@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
-
+import SignupPage from "./pages/SignupPage"
 import SigninPage from "./pages/SigninPage";
 import SigninPageAdmin from "./pages/SigninPageAdmin";
 import SigninPageTeacher from "./pages/SigninPageTeacher";
@@ -11,7 +11,7 @@ function App() {
 
       <BrowserRouter>
         <Routes>
-          
+          <Route path="/signup" element={<SignupPage />} />
           <Route path="/" element={<SigninPage />} />
           <Route path="/signin" element={<SigninPage />} />
           <Route path="/signin/admin" element={<SigninPageAdmin />} />
