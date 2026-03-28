@@ -15,7 +15,7 @@ const SigninSchema = z.object({
 
 type SigninFormValues = z.infer<typeof SigninSchema>;
 
-export default function SigninPage({
+export default function SigninPageTeacher({
   className,
   ...props
 }: React.ComponentProps<"div">) {
