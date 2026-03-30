@@ -21,8 +21,33 @@ export default function HomePageStudent() {
   return (
     <div className="min-h-screen w-full flex bg-gradient-to-r from-[#F8F2F9] to-[#CBABCF]">
 
-      {/* SIDEBAR */}
-      <div className="w-[90px] bg-white/40 backdrop-blur-md flex flex-col items-center py-6 gap-6 shadow-lg">
+      <div className="flex-1 flex flex-col">
+
+          <div className="w-full flex items-center justify-between  pb-4 border-b-2 border-gray-300 p-6">
+            <div className="flex gap-2 items-center">
+              <div className="w-18 h-18 rounded-2xl overflow-hidden">
+                <img src="https://res.cloudinary.com/dlzg0btqt/image/upload/f_auto,q_auto/Blue_and_White_Coding_Minimalist_Business_Agency_Logo_1_jmjwft" alt="logo" />
+              </div>
+            <h1 className="text-sm font-semibold">Create your future</h1>
+            </div>
+
+            <div className="relative flex items-center">
+              <Search className="absolute left-3 text-gray-500" size={18} />
+              <span className="absolute left-8 text-gray-500 text-sm">
+                Tìm kiếm
+              </span>
+              <input className="pl-24 pr-4 py-2 rounded-full bg-[#FBD8F8] shadow w-[360px]" />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="w-[40px] h-[40px] bg-gray-300 rounded-full" />
+              <span>Danh Thành</span>
+            </div>
+          </div>
+        {/* HEADER */}
+        <div className="flex">
+
+      <div className="w-[90px] h-[520px] bg-white/40 backdrop-blur-md flex flex-col items-center py-6 gap-6 shadow-lg">
         <div className="flex flex-col items-center gap-6 mt-6 text-gray-700">
 
           <div onClick={() => setTabActive("dashboard")}
@@ -54,40 +79,19 @@ export default function HomePageStudent() {
           </div>
         </div>
 
-        <button className="mt-auto flex flex-col items-center gap-1 text-gray-700 hover:text-[#851385]">
+        <div className="mt-auto flex flex-col items-center gap-1 text-gray-700 hover:text-[#851385]">
           <LogOut size={22}/>
           <span className="text-xs">Đăng xuất</span>
-        </button>
-      </div>
-
-      {/* MAIN */}
-      <div className="flex-1 flex flex-col">
-
-        {/* HEADER */}
-        <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-gray-300 p-6">
-          <h1 className="text-xl font-semibold">Create your future</h1>
-
-          <div className="relative flex items-center">
-            <Search className="absolute left-3 text-gray-500" size={18} />
-            <span className="absolute left-8 text-gray-500 text-sm">
-              Tìm kiếm
-            </span>
-            <input className="pl-24 pr-4 py-2 rounded-full bg-[#FBD8F8] shadow w-[360px]" />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="w-[40px] h-[40px] bg-gray-300 rounded-full" />
-            <span>Danh Thành</span>
-          </div>
         </div>
-
-        {/* CONTENT */}
-        <div className="flex-1 px-6 pb-6">
+      </div>
+        <div className="flex-1 px-6 pb-6 mt-6">
           {tabActive === "dashboard" && <DashBoard/>}
           {tabActive === "notification" && <NotificationTab />}
           {tabActive === "profile" && <ProfileTab />}
           {tabActive === "roadmap" && <RoadmapTab />}
         </div>
+        </div>
+        {/* CONTENT */}
 
       </div>
     </div>

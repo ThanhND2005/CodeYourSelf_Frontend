@@ -1,4 +1,4 @@
-import React from "react";
+import React, { use } from "react";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -7,6 +7,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useNavigate } from "react-router-dom";
+import { getRedirectPath } from "@/lib/navigation";
 
 const SigninSchema = z.object({
   username: z.string().min(1, "Tên đăng nhập không được để trống"),
@@ -26,9 +29,21 @@ export default function SigninPageTeacher({
   } = useForm<SigninFormValues>({
     resolver: zodResolver(SigninSchema),
   });
-
-  const onSubmit = (data: SigninFormValues) => {
-    console.log(data);
+  const {signinAdmin} = useAuthStore()
+  const navigate = useNavigate()
+  const onSubmit = async (data: SigninFormValues) => {
+    const {username,password} = data
+    try {
+      await signinAdmin(username, password)
+      const user = useAuthStore.getState().user 
+      if(user)
+      {
+        const correctPath = getRedirectPath(user.role as string)
+        navigate(correctPath)
+      }
+    } catch (error) {
+      console.error(error)
+    }
   };
 
   return (

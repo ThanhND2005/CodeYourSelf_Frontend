@@ -7,6 +7,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { authService } from "@/services/authService";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { getRedirectPath } from "@/lib/navigation";
+import { useNavigate } from "react-router-dom";
 
 const SigninSchema = z.object({
   username: z.string().min(1, "Tên đăng nhập không được để trống"),
@@ -26,9 +30,21 @@ export default function SigninPage({
   } = useForm<SigninFormValues>({
     resolver: zodResolver(SigninSchema),
   });
-
-  const onSubmit = (data: SigninFormValues) => {
-    console.log(data);
+  const {signin} = useAuthStore()
+  const navigate = useNavigate()
+  const onSubmit = async (data: SigninFormValues) => {
+    const {username, password} = data
+    try {
+      await signin(username, password)
+      const user = useAuthStore.getState().user
+      if(user)
+      {
+        const correctPath = getRedirectPath(user.role as string)
+        navigate(correctPath)
+      }
+    } catch (error) {
+      console.error(error)
+    }
   };
 
   return (

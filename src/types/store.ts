@@ -17,5 +17,4 @@ export interface authState {
     signout :() => Promise<void>
     getMe: () => Promise<void>
     refresh: () => Promise<void>
-    
 }
