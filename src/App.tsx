@@ -4,6 +4,7 @@ import SignupPage from "./pages/SignupPage"
 import SigninPage from "./pages/SigninPage";
 import SigninPageAdmin from "./pages/SigninPageAdmin";
 import SigninPageTeacher from "./pages/SigninPageTeacher";
+import HomePageStudent from "./pages/HomePageStudent";
 function App() {
   return (
     <>
@@ -16,6 +17,7 @@ function App() {
           <Route path="/signin" element={<SigninPage />} />
           <Route path="/signin/admin" element={<SigninPageAdmin />} />
           <Route path="/signin/teacher" element={<SigninPageTeacher/>}/>
+          <Route path="/student" element={<HomePageStudent />} />
         </Routes>
       </BrowserRouter>
     </>
