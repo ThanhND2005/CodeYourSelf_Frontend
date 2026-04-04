@@ -18,7 +18,7 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use((res) => res, async (error) =>{
     const originalRequest = error.config 
-    if(originalRequest.url.includes("/auth/signin") || originalRequest.url.includes("/auth/signup") ||originalRequest.url.includes("/auth/refresh"))
+    if(originalRequest.url.includes("/auth/signin") || originalRequest.url.includes("/auth/signup") ||originalRequest.url.includes("/auth/refresh") || originalRequest.url.includes("/auth/signinAdmin") || originalRequest.url.includes("/auth/signinTeacher"))
     {
         return Promise.reject(error);
     }

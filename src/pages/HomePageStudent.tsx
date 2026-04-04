@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 
 import DashBoard from "@/components/student/DashBoard";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useNavigate } from "react-router-dom";
 
 const NotificationTab = () => <div>Trang Thông báo</div>;
 const ProfileTab = () => <div>Trang Hồ sơ</div>;
@@ -17,7 +19,17 @@ const RoadmapTab = () => <div>Trang Lộ trình</div>;
 
 export default function HomePageStudent() {
   const [tabActive, setTabActive] = useState("dashboard");
-
+  const signout = useAuthStore((state) => state.signout)
+  const navigate = useNavigate()
+  const logout = async () =>{
+    try {
+      await signout()
+      setTabActive('dashboard')
+      navigate('/signin')
+    } catch (error) {
+      console.error(error)
+    }
+  }
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#F8F2F9] to-[#CBABCF]">
 
@@ -98,7 +110,7 @@ export default function HomePageStudent() {
           </div>
         </div>
 
-        <div className="mt-auto flex flex-col items-center gap-1 text-gray-700 hover:text-[#851385] cursor-pointer">
+        <div className="mt-auto flex flex-col items-center gap-1 text-gray-700 hover:text-[#851385] cursor-pointer" onClick={() => logout() }>
           <LogOut size={22} />
           <span className="text-xs">Đăng xuất</span>
         </div>
