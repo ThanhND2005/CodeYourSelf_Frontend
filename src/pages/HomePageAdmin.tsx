@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
+import DashBoard from "@/components/admin/Dashboard";
 import {
   Home,
   Bell,
@@ -8,7 +9,6 @@ import {
   BarChart3,
   LogOut,
 } from "lucide-react";
-import DashBoard from "@/components/admin/DashBoard";
 
 const NotificationTab = () => <div>Trang Thông báo</div>;
 const UsersTab = () => <div>Quản lý người dùng</div>;
@@ -113,7 +113,7 @@ export default function HomePageAdmin() {
       <div className="pt-[80px] pl-[90px]">
         <div className="p-6 overflow-y-auto min-h-[calc(100vh-80px)]">
 
-          {tabActive === "dashboard" && <Dashboard />}
+          {tabActive === "dashboard" && <DashBoard />}
           {tabActive === "notification" && <NotificationTab />}
           {tabActive === "users" && <UsersTab />}
           {tabActive === "courses" && <CoursesTab />}
