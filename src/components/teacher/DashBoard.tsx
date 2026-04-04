@@ -36,7 +36,7 @@ export default function DashBoard  ()  {
       </div>
 
       {/* COURSES FULL WIDTH */}
-      <div className="bg-[#E6C3E8] p-6 rounded-2xl shadow">
+      <div className="bg-[#FBD8F8] p-6 rounded-2xl shadow">
         <h2 className="mb-4 text-lg font-semibold">Khóa học của tôi</h2>
 
         <div className="flex flex-col gap-4">
