@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import DashBoard from "@/components/admin/Dashboard";
+import DashBoard from "../components/admin/DashBoard";
 import {
   Home,
   Bell,
@@ -9,15 +9,26 @@ import {
   BarChart3,
   LogOut,
 } from "lucide-react";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useNavigate } from "react-router-dom";
 
 const NotificationTab = () => <div>Trang Thông báo</div>;
 const UsersTab = () => <div>Quản lý người dùng</div>;
 const CoursesTab = () => <div>Quản lý khóa học</div>;
 const RevenueTab = () => <div>Trang Doanh số</div>;
-
 export default function HomePageAdmin() {
   const [tabActive, setTabActive] = useState("dashboard");
-
+  const signout = useAuthStore((state) => state.signout)
+  const navigate = useNavigate()
+  const logout = async () =>{
+    try {
+      await signout()
+      setTabActive('dashboard')
+      navigate('/signin')
+    } catch (error) {
+      console.error(error)
+    }
+  }
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#F8F2F9] to-[#CBABCF]">
 
@@ -103,7 +114,7 @@ export default function HomePageAdmin() {
         </div>
 
         {/* Logout */}
-        <div className="mt-auto flex flex-col items-center gap-1 text-gray-700 hover:text-[#851385] cursor-pointer">
+        <div className="mt-auto flex flex-col items-center gap-1 text-gray-700 hover:text-[#851385] cursor-pointer" onClick={() => logout()}>
           <LogOut size={22} />
           <span className="text-xs">Đăng xuất</span>
         </div>

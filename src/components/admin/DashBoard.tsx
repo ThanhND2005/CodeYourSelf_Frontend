@@ -114,8 +114,8 @@ const DashBoard = () => {
 
         {/* LEFT */}
         <div className="flex-1 space-y-6">
+          <div className="grid grid-cols-2 gap-4">
 
-          {/* PENDING */}
           <div className="bg-[#FBD8F8] p-5 rounded-2xl shadow">
             <h2 className="mb-4 font-medium text-lg">Chờ phê duyệt</h2>
 
@@ -172,22 +172,8 @@ const DashBoard = () => {
               })}
             </div>
           </div>
-        </div>
-
-        {/* RIGHT - ACTIVITIES */}
-        <div className="w-[320px] bg-[#FBD8F8] p-5 rounded-2xl shadow">
-          <h2 className="mb-4 font-medium text-lg">Hoạt động gần đây</h2>
-
-          <div className="flex flex-col gap-4">
-            {activities.map((item, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-xl p-3 shadow text-sm"
-              >
-                {item}
-              </div>
-            ))}
           </div>
+          {/* PENDING */}
         </div>
       </div>
     </div>
