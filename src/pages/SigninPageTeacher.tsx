@@ -1,4 +1,4 @@
-import React, { use } from "react";
+import React from "react";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -29,12 +29,12 @@ export default function SigninPageTeacher({
   } = useForm<SigninFormValues>({
     resolver: zodResolver(SigninSchema),
   });
-  const {signinAdmin} = useAuthStore()
+  const {signinTeacher} = useAuthStore()
   const navigate = useNavigate()
   const onSubmit = async (data: SigninFormValues) => {
     const {username,password} = data
     try {
-      await signinAdmin(username, password)
+      await signinTeacher(username, password)
       const user = useAuthStore.getState().user 
       if(user)
       {
