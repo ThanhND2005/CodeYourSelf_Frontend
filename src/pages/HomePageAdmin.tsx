@@ -113,7 +113,7 @@ export default function HomePageAdmin() {
       <div className="pt-[80px] pl-[90px]">
         <div className="p-6 overflow-y-auto min-h-[calc(100vh-80px)]">
 
-          {tabActive === "dashboard" && <DashboardTab />}
+          {tabActive === "dashboard" && <Dashboard />}
           {tabActive === "notification" && <NotificationTab />}
           {tabActive === "users" && <UsersTab />}
           {tabActive === "courses" && <CoursesTab />}
