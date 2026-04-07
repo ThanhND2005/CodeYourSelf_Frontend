@@ -14,6 +14,12 @@ import DashBoard from "@/components/teacher/DashBoard";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useNavigate } from "react-router-dom";
 
+import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
 const NotificationTab = () => <div>Trang Thông báo</div>;
 const ProfileTab = () => <div>Trang Hồ sơ</div>;
 const IncomeTab = () => <div>Trang Thu nhập</div>;
@@ -21,17 +27,27 @@ const CoursesTab = () => <div>Trang Khóa học</div>;
 
 export default function HomePageTeacher() {
   const [tabActive, setTabActive] = useState("dashboard");
-  const signout = useAuthStore((state) => state.signout)
-  const navigate = useNavigate()
-  const logout = async () =>{
+
+  const signout = useAuthStore((state) => state.signout);
+  const navigate = useNavigate();
+
+  const logout = async () => {
     try {
-      await signout()
-      setTabActive('dashboard')
-      navigate('/signin')
+      await signout();
+      setTabActive("dashboard");
+      navigate("/signin");
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
-  }
+  };
+
+  const fakeUser = {
+    name: "Nguyễn Thị Nguyệt",
+    avatar: "https://via.placeholder.com/40",
+  };
+
+  const [openAvatar, setOpenAvatar] = useState(false);
+
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#F8F2F9] to-[#CBABCF]">
 
@@ -56,9 +72,94 @@ export default function HomePageTeacher() {
           <input className="pl-24 pr-4 py-2 rounded-full bg-[#FBD8F8] shadow w-[360px]" />
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="w-[40px] h-[40px] bg-gray-300 rounded-full" />
-          <span>Thị Nguyệt</span>
+        {/* ===== USER SECTION ===== */}
+        <div className="flex items-center gap-3">
+
+          {/* ===== DIALOG SỬA THÔNG TIN ===== */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <div className="cursor-pointer text-right">
+                <p className="text-gray-800 text-sm font-semibold">
+                  {fakeUser.name}
+                </p>
+              </div>
+            </DialogTrigger>
+
+            <DialogContent className="max-w-[500px] p-6">
+              <div className="flex flex-col gap-3">
+                <h2 className="text-2xl font-bold text-center text-[#851385] mb-2">
+                  Cập nhật thông tin cá nhân
+                </h2>
+
+                <div>
+                  <Label>Họ và tên</Label>
+                  <Input defaultValue={fakeUser.name} />
+                </div>
+
+                <div>
+                  <Label>Ngày sinh</Label>
+                  <Input type="date" />
+                </div>
+
+                <div>
+                  <Label>Giới tính</Label>
+                  <RadioGroup defaultValue="Nữ">
+                    <div className="flex gap-4">
+                      <div className="flex items-center gap-1">
+                        <RadioGroupItem value="Nam" />
+                        <Label>Nam</Label>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <RadioGroupItem value="Nữ" />
+                        <Label>Nữ</Label>
+                      </div>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                <div>
+                  <Label>Địa chỉ</Label>
+                  <Input placeholder="Nhập địa chỉ..." />
+                </div>
+
+                <Button className="bg-[#851385] hover:bg-[#6a0f6a] text-white rounded-xl py-2" onClick={() => alert("Chưa xử lý logic")}>
+                  Cập nhật
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* ===== DIALOG AVATAR ===== */}
+          <Dialog open={openAvatar} onOpenChange={setOpenAvatar}>
+            <DialogTrigger asChild>
+              <div className="w-[40px] h-[40px] rounded-full overflow-hidden cursor-pointer">
+                <img
+                  src={fakeUser.avatar}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </DialogTrigger>
+
+            <DialogContent>
+              <div className="flex flex-col gap-3">
+                <h2 className="text-xl text-[#851385] font-bold text-center">
+                  Cập nhật avatar
+                </h2>
+
+                <Input type="file" />
+
+                <Button className="bg-[#851385] hover:bg-[#6a0f6a] text-white rounded-xl py-2"
+                  onClick={() => {
+                    alert("Upload chưa xử lý");
+                    setOpenAvatar(false);
+                  }}
+                >
+                  Upload
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
         </div>
       </div>
 
@@ -95,7 +196,7 @@ export default function HomePageTeacher() {
               "flex flex-col items-center gap-1 cursor-pointer",
               tabActive === "profile" && "text-[#851385]"
             )}
-            >
+          >
             <User size={22} />
             <span className="text-xs">Hồ sơ</span>
           </div>
@@ -123,7 +224,10 @@ export default function HomePageTeacher() {
           </div>
         </div>
 
-        <div className="mt-auto flex flex-col items-center gap-1 text-gray-700 hover:text-[#851385] cursor-pointer" onClick={() => logout()}>
+        <div
+          className="mt-auto flex flex-col items-center gap-1 text-gray-700 hover:text-[#851385] cursor-pointer"
+          onClick={() => logout()}
+        >
           <LogOut size={22} />
           <span className="text-xs">Đăng xuất</span>
         </div>
@@ -131,17 +235,13 @@ export default function HomePageTeacher() {
 
       {/* CONTENT */}
       <div className="pt-[80px] pl-[90px]">
-
         <div className="p-6 overflow-y-auto min-h-[calc(100vh-80px)]">
-
           {tabActive === "dashboard" && <DashBoard />}
           {tabActive === "notification" && <NotificationTab />}
           {tabActive === "profile" && <ProfileTab />}
           {tabActive === "income" && <IncomeTab />}
           {tabActive === "courses" && <CoursesTab />}
-
         </div>
-
       </div>
     </div>
   );
