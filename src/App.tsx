@@ -9,6 +9,8 @@ import HomePageTeacher from "./pages/HomePageTeacher";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import HomePageAdmin from "./pages/HomePageAdmin";
 
+
+
 function App() {
   return (
     <>
@@ -20,6 +22,7 @@ function App() {
           <Route path="/signin" element={<SigninPage />} />
           <Route path="/signin/admin" element={<SigninPageAdmin />} />
           <Route path="/signin/teacher" element={<SigninPageTeacher />} />
+          
           <Route element={<ProtectedRoute allowedRole="teacher" />}>
             <Route path="/teacher" element={<HomePageTeacher />} />
           </Route>
