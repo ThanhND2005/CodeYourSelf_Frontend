@@ -18,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import CourseDetail from "@/components/student/CourseDetail";
+import StudyProgress from "@/components/student/StudyProgress";
 
 const NotificationTab = () => <div>Trang Thông báo</div>;
 const ProfileTab = () => <div>Trang Hồ sơ</div>;

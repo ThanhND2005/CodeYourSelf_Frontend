@@ -174,9 +174,7 @@ export default function CourseDetail() {
                         <button
                           key={index}
                           className="w-full text-left px-4 py-3 rounded-xl bg-[#fff6ff] hover:bg-[#f7e8f7] transition shadow-sm"
-                          onClick={() =>
-                            alert(`Navigate tới bài học: ${lesson}`)
-                          }
+                            
                         >
                           Bài {index + 1}: {lesson}
                         </button>
