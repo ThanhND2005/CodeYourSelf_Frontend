@@ -8,6 +8,7 @@ import {
   Gauge,
 } from "lucide-react";
 import { SiSpringboot } from "react-icons/si";
+import PaymentDialog from "./PaymentDialog";
 
 const fakeCourse = {
   title: "Java Springboot",
@@ -193,9 +194,11 @@ export default function CourseDetail() {
             <Logo size={90} color={fakeCourse.logoColor} />
           </div>
 
-          <button className="w-full bg-[#851385] hover:bg-[#6a0f6a] text-white py-3 rounded-xl font-semibold mb-6">
-            Đăng ký học
-          </button>
+        <PaymentDialog>
+            <button className="w-full bg-[#851385] hover:bg-[#6a0f6a] text-white py-3 rounded-xl font-semibold mb-6">
+                Đăng ký học
+            </button>
+        </PaymentDialog>
 
           <h3 className="text-2xl font-bold mb-3">
             Học phí: {fakeCourse.price}
