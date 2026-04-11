@@ -1,13 +1,6 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import {
-  Home,
-  Bell,
-  User,
-  Map,
-  LogOut,
-  Search,
-} from "lucide-react";
+import { Home, Bell, User, Map, LogOut, Search } from "lucide-react";
 
 import DashBoard from "@/components/student/DashBoard";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -20,17 +13,21 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import CourseDetail from "@/components/student/CourseDetail";
 import StudyProgress from "@/components/student/StudyProgress";
+import { useTabStudentStore } from "@/stores/useTabStore";
+import CourseSearch from "@/components/student/CourseSearch";
+import { useCourseStore } from "@/stores/useCourseStore";
+import { StudentService } from "@/services/Student";
 
 const NotificationTab = () => <div>Trang Thông báo</div>;
 const ProfileTab = () => <div>Trang Hồ sơ</div>;
 const RoadmapTab = () => <div>Trang Lộ trình</div>;
 
 export default function HomePageStudent() {
-  const [tabActive, setTabActive] = useState("dashboard");
+  const { tabActive, setTabActive } = useTabStudentStore();
 
   const signout = useAuthStore((state) => state.signout);
   const navigate = useNavigate();
-
+  const {setCourseSearch} = useCourseStore()
   const logout = async () => {
     try {
       await signout();
@@ -40,7 +37,22 @@ export default function HomePageStudent() {
       console.error(error);
     }
   };
-
+  const [keyword, setKeyword] = useState("");
+  const handleSearch = async () => {
+    if (!keyword.trim()) return;
+    try {
+      const courseSearchs = await StudentService.searchCourse(keyword)
+      setCourseSearch(courseSearchs)
+      setTabActive("search")
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const handleKeyDown = (e : React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
   const fakeUser = {
     name: "Danh Thành",
     avatar: "https://via.placeholder.com/40",
@@ -52,10 +64,8 @@ export default function HomePageStudent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#F8F2F9] to-[#CBABCF]">
-
       {/* HEADER */}
       <div className="fixed top-0 left-0 w-full h-[80px] flex items-center justify-between px-6 border-b-2 border-gray-300 bg-white/10 backdrop-blur-md z-50">
-
         <div className="flex gap-2 items-center">
           <div className="w-14 h-14 rounded-2xl overflow-hidden">
             <img
@@ -67,16 +77,25 @@ export default function HomePageStudent() {
         </div>
 
         <div className="relative flex items-center">
-          <Search className="absolute left-3 text-gray-500" size={18} />
-          <span className="absolute left-8 text-gray-500 text-sm">
-            Tìm kiếm
-          </span>
-          <input className="pl-24 pr-4 py-2 rounded-full bg-[#FBD8F8] shadow w-[360px]" />
+          <button
+            type="button"
+            onClick={() => handleSearch()}
+            className="flex justify-center items-center"
+          >
+            <Search className="absolute left-3 text-gray-500" size={18} />
+          </button>
+          <input
+            type="text"
+            className="pl-8 py-2 rounded-full bg-[#FBD8F8] shadow w-[360px] text-left"
+            placeholder="Tìm kiếm khóa học ..."
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
         </div>
 
         {/* ===== USER SECTION ===== */}
         <div className="flex items-center gap-3">
-
           {/* ===== DIALOG SỬA THÔNG TIN ===== */}
           <Dialog>
             <DialogTrigger asChild>
@@ -139,10 +158,7 @@ export default function HomePageStudent() {
           <Dialog open={openAvatar} onOpenChange={setOpenAvatar}>
             <DialogTrigger asChild>
               <div className="w-[40px] h-[40px] rounded-full overflow-hidden cursor-pointer hover:scale-105 transition">
-                <img
-                  src={preview}
-                  className="w-full h-full object-cover"
-                />
+                <img src={preview} className="w-full h-full object-cover" />
               </div>
             </DialogTrigger>
 
@@ -180,20 +196,17 @@ export default function HomePageStudent() {
               </div>
             </DialogContent>
           </Dialog>
-
         </div>
       </div>
 
       {/* SIDEBAR */}
       <div className="fixed top-[80px] left-0 w-[90px] h-[calc(100vh-80px)] bg-white/10 backdrop-blur-md flex flex-col items-center py-6 gap-6 shadow-lg z-40">
-
         <div className="flex flex-col items-center gap-6 text-gray-700">
-
           <div
             onClick={() => setTabActive("dashboard")}
             className={cn(
               "flex flex-col items-center gap-1 cursor-pointer",
-              tabActive === "dashboard" && "text-[#851385]"
+              tabActive === "dashboard" && "text-[#851385]",
             )}
           >
             <Home size={22} />
@@ -204,7 +217,7 @@ export default function HomePageStudent() {
             onClick={() => setTabActive("notification")}
             className={cn(
               "flex flex-col items-center gap-1 cursor-pointer",
-              tabActive === "notification" && "text-[#851385]"
+              tabActive === "notification" && "text-[#851385]",
             )}
           >
             <Bell size={22} />
@@ -215,7 +228,7 @@ export default function HomePageStudent() {
             onClick={() => setTabActive("profile")}
             className={cn(
               "flex flex-col items-center gap-1 cursor-pointer",
-              tabActive === "profile" && "text-[#851385]"
+              tabActive === "profile" && "text-[#851385]",
             )}
           >
             <User size={22} />
@@ -226,7 +239,7 @@ export default function HomePageStudent() {
             onClick={() => setTabActive("roadmap")}
             className={cn(
               "flex flex-col items-center gap-1 cursor-pointer",
-              tabActive === "roadmap" && "text-[#851385]"
+              tabActive === "roadmap" && "text-[#851385]",
             )}
           >
             <Map size={22} />
@@ -250,6 +263,9 @@ export default function HomePageStudent() {
           {tabActive === "notification" && <NotificationTab />}
           {tabActive === "profile" && <ProfileTab />}
           {tabActive === "roadmap" && <RoadmapTab />}
+          {tabActive === "coursedetail" && <CourseDetail/>}
+          {tabActive === "progress" && <StudyProgress/>}
+          {tabActive === "search" && <CourseSearch/>}
         </div>
       </div>
     </div>
