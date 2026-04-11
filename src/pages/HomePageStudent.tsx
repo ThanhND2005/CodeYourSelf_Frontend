@@ -17,6 +17,7 @@ import { useTabStudentStore } from "@/stores/useTabStore";
 import CourseSearch from "@/components/student/CourseSearch";
 import { useCourseStore } from "@/stores/useCourseStore";
 import { StudentService } from "@/services/Student";
+import SingleCourseDetail from "@/components/student/CourseDetailSingle";
 
 const NotificationTab = () => <div>Trang Thông báo</div>;
 const ProfileTab = () => <div>Trang Hồ sơ</div>;
@@ -27,7 +28,7 @@ export default function HomePageStudent() {
 
   const signout = useAuthStore((state) => state.signout);
   const navigate = useNavigate();
-  const {setCourseSearch} = useCourseStore()
+  const {setCourseSearch,setMultipleCourseSearch} = useCourseStore()
   const logout = async () => {
     try {
       await signout();
@@ -41,8 +42,9 @@ export default function HomePageStudent() {
   const handleSearch = async () => {
     if (!keyword.trim()) return;
     try {
-      const courseSearchs = await StudentService.searchCourse(keyword)
+      const {courseSearchs,multipleCourseSearchs} = await StudentService.searchCourse(keyword)
       setCourseSearch(courseSearchs)
+      setMultipleCourseSearch(multipleCourseSearchs)
       setTabActive("search")
     } catch (error) {
       console.error(error);
@@ -266,6 +268,7 @@ export default function HomePageStudent() {
           {tabActive === "coursedetail" && <CourseDetail/>}
           {tabActive === "progress" && <StudyProgress/>}
           {tabActive === "search" && <CourseSearch/>}
+          {tabActive === "coursedetail2" && <SingleCourseDetail/>}
         </div>
       </div>
     </div>
