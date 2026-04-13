@@ -19,11 +19,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import CourseManagementComponent from "@/components/teacher/CourseComponent";
+import TeacherProfile from "@/components/teacher/ProfileComponent";
+import NotificationPage from "@/components/teacher/NotificationComponent";
+import IncomeDashboard from "@/components/teacher/IncomeComponent";
 
-const NotificationTab = () => <div>Trang Thông báo</div>;
-const ProfileTab = () => <div>Trang Hồ sơ</div>;
+
 const IncomeTab = () => <div>Trang Thu nhập</div>;
-const CoursesTab = () => <div>Trang Khóa học</div>;
+
 
 export default function HomePageTeacher() {
   const [tabActive, setTabActive] = useState("dashboard");
@@ -237,10 +240,10 @@ export default function HomePageTeacher() {
       <div className="pt-[80px] pl-[90px]">
         <div className="p-6 overflow-y-auto min-h-[calc(100vh-80px)]">
           {tabActive === "dashboard" && <DashBoard />}
-          {tabActive === "notification" && <NotificationTab />}
-          {tabActive === "profile" && <ProfileTab />}
-          {tabActive === "income" && <IncomeTab />}
-          {tabActive === "courses" && <CoursesTab />}
+          {tabActive === "notification" && <NotificationPage />}
+          {tabActive === "profile" && <TeacherProfile />}
+          {tabActive === "income" && <IncomeDashboard />}
+          {tabActive === "courses" && <CourseManagementComponent />}
         </div>
       </div>
     </div>
