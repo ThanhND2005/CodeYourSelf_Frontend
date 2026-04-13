@@ -11,7 +11,7 @@ import {
 import PaymentDialog from "./PaymentDialog";
 import { useCourseStore } from "@/stores/useCourseStore";
 
-// --- MOCK DATA ---
+
 
 
 

@@ -11,11 +11,6 @@ import {
 import PaymentDialog from "./PaymentDialog";
 import { useCourseStore } from "@/stores/useCourseStore";
 
-// --- INTERFACES ---
-
-// --- MOCK DATA ---
-
-
 export default function SingleCourseDetail() {
   const formatCurrency = (amount: number) => {
     return amount === 0 

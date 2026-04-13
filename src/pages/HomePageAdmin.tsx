@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import DashBoard from "../components/admin/DashBoard";
 import {
   Home,
   Bell,
@@ -11,11 +10,14 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useNavigate } from "react-router-dom";
+import AdminNotifications from "@/components/admin/Notification";
+import UserManageMain from "@/components/admin/User";
+import CourseApprovalPage from "@/components/admin/CourseWaiting";
+import DoanhSoPage from "@/components/admin/Stat";
+import AdminDashboard from "../components/admin/DashBoard";
 
-const NotificationTab = () => <div>Trang Thông báo</div>;
-const UsersTab = () => <div>Quản lý người dùng</div>;
-const CoursesTab = () => <div>Quản lý khóa học</div>;
-const RevenueTab = () => <div>Trang Doanh số</div>;
+
+
 export default function HomePageAdmin() {
   const [tabActive, setTabActive] = useState("dashboard");
   const signout = useAuthStore((state) => state.signout)
@@ -124,12 +126,12 @@ export default function HomePageAdmin() {
       <div className="pt-[80px] pl-[90px]">
         <div className="p-6 overflow-y-auto min-h-[calc(100vh-80px)]">
 
-          {tabActive === "dashboard" && <DashBoard />}
-          {tabActive === "notification" && <NotificationTab />}
-          {tabActive === "users" && <UsersTab />}
-          {tabActive === "courses" && <CoursesTab />}
-          {tabActive === "revenue" && <RevenueTab />}
-
+          {tabActive === "dashboard" && <AdminDashboard />}
+          {tabActive === "notification" && <AdminNotifications />}
+          {tabActive === "users" && <UserManageMain />}
+          {tabActive === "courses" && <CourseApprovalPage />}
+          {tabActive === "revenue" && <DoanhSoPage/>}
+          
         </div>
       </div>
     </div>
