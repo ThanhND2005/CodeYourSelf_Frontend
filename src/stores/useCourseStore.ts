@@ -8,7 +8,7 @@ export const useCourseStore = create<CourseState>((set,get)=>({
     course : null,
     multipleCourse: null,
     courses : null,
-    videos: null,
+    videos: [],
     setCourseSearch: (courses : CourseSearch[]) => set({courseSearchs: courses}),
     setMultipleCourseSearch: (courses : MultipleCourseSearch[]) => set({multipleCourseSearchs : courses}),
     setCourse : (course : Course) => set({course}),

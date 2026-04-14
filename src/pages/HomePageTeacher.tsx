@@ -3,11 +3,12 @@ import { cn } from "@/lib/utils";
 import {
   Home,
   Bell,
-  User,
+
   DollarSign,
   BookOpen,
   LogOut,
   Search,
+  User,
 } from "lucide-react";
 
 import DashBoard from "@/components/teacher/DashBoard";
@@ -23,13 +24,15 @@ import CourseManagementComponent from "@/components/teacher/CourseComponent";
 import TeacherProfile from "@/components/teacher/ProfileComponent";
 import NotificationPage from "@/components/teacher/NotificationComponent";
 import IncomeDashboard from "@/components/teacher/IncomeComponent";
+import { useTeacherStore } from "@/stores/useTeacherStore";
+import { useTabStudentStore, useTabTeacherStore } from "@/stores/useTabStore";
 
 
-const IncomeTab = () => <div>Trang Thu nhập</div>;
+
 
 
 export default function HomePageTeacher() {
-  const [tabActive, setTabActive] = useState("dashboard");
+  const {tabActive,setTabActive} = useTabTeacherStore()
 
   const signout = useAuthStore((state) => state.signout);
   const navigate = useNavigate();
@@ -44,11 +47,7 @@ export default function HomePageTeacher() {
     }
   };
 
-  const fakeUser = {
-    name: "Nguyễn Thị Nguyệt",
-    avatar: "https://via.placeholder.com/40",
-  };
-
+  const teacher = useTeacherStore((s) => s.teacher)
   const [openAvatar, setOpenAvatar] = useState(false);
 
   return (
@@ -75,16 +74,17 @@ export default function HomePageTeacher() {
           <input className="pl-24 pr-4 py-2 rounded-full bg-[#FBD8F8] shadow w-[360px]" />
         </div>
 
-        {/* ===== USER SECTION ===== */}
+        {/* ===== teacher SECTION ===== */}
         <div className="flex items-center gap-3">
 
           {/* ===== DIALOG SỬA THÔNG TIN ===== */}
           <Dialog>
             <DialogTrigger asChild>
               <div className="cursor-pointer text-right">
-                <p className="text-gray-800 text-sm font-semibold">
-                  {fakeUser.name}
+                <p className="text-gray-800 text-md font-semibold">
+                  {teacher?.name}
                 </p>
+                <p className="text-gray-800 text-sm font-semibold">Giáo viên</p>
               </div>
             </DialogTrigger>
 
@@ -96,7 +96,7 @@ export default function HomePageTeacher() {
 
                 <div>
                   <Label>Họ và tên</Label>
-                  <Input defaultValue={fakeUser.name} />
+                  <Input defaultValue={teacher?.name} />
                 </div>
 
                 <div>
@@ -137,7 +137,7 @@ export default function HomePageTeacher() {
             <DialogTrigger asChild>
               <div className="w-[40px] h-[40px] rounded-full overflow-hidden cursor-pointer">
                 <img
-                  src={fakeUser.avatar}
+                  src={teacher?.avatarUrl}
                   className="w-full h-full object-cover"
                 />
               </div>
