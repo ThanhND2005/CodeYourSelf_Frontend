@@ -1,40 +1,10 @@
 import React, { useState, useEffect } from 'react';
 // Import các icon từ lucide-react
 import { Users, Library, Layers, BookOpen } from 'lucide-react';
+import { useTeacherStore } from '@/stores/useTeacherStore';
+import { useTabTeacherStore } from '@/stores/useTabStore';
 
-// ==========================================
-// 1. ĐỊNH NGHĨA TYPES (Dựa theo Database Schema)
-// ==========================================
 
-// Tuân thủ bảng Course
-interface SingleCourse {
-  courseId: string;
-  name: string;
-  cost: number;
-  summary: string;
-  deleted: number;
-  teacherId: string;
-  rate: number;
-  multipleCourseId: string | null;
-  status: string;
-  imageUrl: string;
-  // TRƯỜNG THÊM: Cần join với bảng Payment (hoặc Enrollment) để lấy tổng số học viên
-  totalStudents?: number; 
-}
-
-// Tuân thủ bảng MultipleCourse
-interface MultipleCourse {
-  multipleCourseId: string;
-  name: string;
-  cost: number;
-  summary: string; 
-  deleted: number;
-  rate: number;
-  teacherId: string;
-  imageUrl: string;
-  // TRƯỜNG THÊM: Số lượng khóa học con bên trong lộ trình
-  totalCourses?: number;
-}
 
 // Tuân thủ bảng Notification
 interface CourseNotification {
@@ -52,78 +22,7 @@ interface CourseNotification {
 // 2. MOCK DATA
 // ==========================================
 
-const mockSingleCourses: SingleCourse[] = [
-  {
-    courseId: 'c1-uuid',
-    name: 'Web Design Basic',
-    cost: 500000,
-    summary: 'Khóa học thiết kế web cơ bản dành cho người mới bắt đầu.',
-    deleted: 0,
-    teacherId: 't1-uuid',
-    rate: 4.8,
-    multipleCourseId: null,
-    status: 'ACTIVE',
-    imageUrl: 'https://via.placeholder.com/150',
-    totalStudents: 120,
-  },
-  {
-    courseId: 'c2-uuid',
-    name: '2D Games Development',
-    cost: 750000,
-    summary: 'Lập trình game 2D cơ bản với Unity.',
-    deleted: 0,
-    teacherId: 't1-uuid',
-    rate: 4.5,
-    multipleCourseId: null,
-    status: 'DRAFT',
-    imageUrl: 'https://via.placeholder.com/150',
-    totalStudents: 45,
-  },
-];
 
-const mockMultipleCourses: MultipleCourse[] = [
-  {
-    multipleCourseId: 'mc1-uuid',
-    name: 'Lộ trình Fullstack Developer',
-    cost: 2000000,
-    summary: 'Lộ trình từ Zero đến Hero bao gồm Front-end và Back-end.',
-    deleted: 0,
-    rate: 4.9,
-    teacherId: 't1-uuid',
-    imageUrl: 'https://via.placeholder.com/150',
-    totalCourses: 5,
-  }
-];
-
-const mockNotifications: CourseNotification[] = [
-  {
-    notificationId: 'n1-uuid',
-    title: 'Đăng ký khóa học mới',
-    content: 'Đã thanh toán thành công khóa Web Design Basic',
-    createdAt: '2026-04-13T10:30:00Z',
-    deleted: 0,
-    studentName: 'Trần Văn A',
-    studentAvatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d',
-  },
-  {
-    notificationId: 'n2-uuid',
-    title: 'Đăng ký lộ trình',
-    content: 'Đã đăng ký Lộ trình Fullstack Developer',
-    createdAt: '2026-04-13T09:15:00Z',
-    deleted: 0,
-    studentName: 'Nguyễn Thị B',
-    studentAvatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
-  },
-  {
-    notificationId: 'n3-uuid',
-    title: 'Đăng ký khóa học mới',
-    content: 'Đã thanh toán thành công khóa 2D Games',
-    createdAt: '2026-04-12T15:45:00Z',
-    deleted: 0,
-    studentName: 'Lê Hoàng C',
-    studentAvatar: 'https://i.pravatar.cc/150?u=a04258114e29026702d',
-  }
-];
 
 // ==========================================
 // 3. MAIN COMPONENT
@@ -131,50 +30,12 @@ const mockNotifications: CourseNotification[] = [
 
 export default function TeacherDashboardContent() {
   // --- STATES ---
-  const [singleCourses, setSingleCourses] = useState<SingleCourse[]>([]);
-  const [multipleCourses, setMultipleCourses] = useState<MultipleCourse[]>([]);
+  
   const [notifications, setNotifications] = useState<CourseNotification[]>([]);
-  const [stats, setStats] = useState({ totalStudents: 0, totalCourses: 0 });
+  // const [stats, setStats] = useState({ totalStudents: 0, totalCourses: 0 });
 
   // --- API CALL PLACEHOLDERS ---
-  const fetchSingleCourses = async () => {
-    try {
-      // Mock API call
-      setSingleCourses(mockSingleCourses);
-    } catch (error) {
-      console.error("Lỗi khi tải khóa học đơn:", error);
-    }
-  };
-
-  const fetchMultipleCourses = async () => {
-    try {
-      // Mock API call
-      setMultipleCourses(mockMultipleCourses);
-    } catch (error) {
-      console.error("Lỗi khi tải lộ trình:", error);
-    }
-  };
-
-  const fetchNotifications = async () => {
-    try {
-      // Mock API call
-      setNotifications(mockNotifications);
-    } catch (error) {
-      console.error("Lỗi khi tải thông báo:", error);
-    }
-  };
-
-  const fetchDashboardStats = async () => {
-    try {
-      // Mock API call
-      setStats({
-        totalStudents: 165,
-        totalCourses: mockSingleCourses.length + mockMultipleCourses.length
-      });
-    } catch (error) {
-      console.error("Lỗi khi tải thống kê:", error);
-    }
-  };
+  
 
   // --- HANDLERS ---
   const handleEditCourse = (id: string, isMultiple: boolean) => {
@@ -182,13 +43,10 @@ export default function TeacherDashboardContent() {
   };
 
   // --- EFFECTS ---
-  useEffect(() => {
-    fetchSingleCourses();
-    fetchMultipleCourses();
-    fetchNotifications();
-    fetchDashboardStats();
-  }, []);
-
+  const {setTabActive} = useTabTeacherStore()
+  const students = useTeacherStore((s) => s.students)
+  const singleCourses = useTeacherStore((s) => s.singleCourses)
+  const multipleCourses = useTeacherStore((s) => s.multipleCourses)
   return (
     <div className="flex-1 bg-[#F9FAFB] p-6 lg:p-10 w-full min-h-screen font-sans">
       
@@ -198,7 +56,7 @@ export default function TeacherDashboardContent() {
         <div className="bg-[#FFD1E3] rounded-2xl p-6 flex-1 flex items-center justify-between shadow-sm border border-pink-100">
           <div>
             <h3 className="text-gray-700 font-medium mb-1">Học viên của tôi</h3>
-            <p className="text-3xl font-bold text-gray-900">{stats.totalStudents} <span className="text-base font-normal">học viên</span></p>
+            <p className="text-3xl font-bold text-gray-900">{students?.length ?? 0} <span className="text-base font-normal">học viên</span></p>
           </div>
           <div className="bg-white p-3 rounded-full shadow-inner flex items-center justify-center">
             {/* Sử dụng icon Users từ lucide-react */}
@@ -210,7 +68,7 @@ export default function TeacherDashboardContent() {
         <div className="bg-[#FFD1E3] rounded-2xl p-6 flex-1 flex items-center justify-between shadow-sm border border-pink-100">
           <div>
             <h3 className="text-gray-700 font-medium mb-1">Các khóa học đã đăng</h3>
-            <p className="text-3xl font-bold text-gray-900">{stats.totalCourses} <span className="text-base font-normal">khóa học</span></p>
+            <p className="text-3xl font-bold text-gray-900">{(multipleCourses?.length ?? 0 ) + (singleCourses?.length ?? 0 )}<span className="text-base font-normal">{' '}khóa học</span></p>
           </div>
           <div className="bg-white p-3 rounded-full shadow-inner flex items-center justify-center">
              {/* Sử dụng icon Library từ lucide-react */}
@@ -231,7 +89,7 @@ export default function TeacherDashboardContent() {
             <div className="mb-8">
               <h3 className="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">Lộ trình học (Multiple Courses)</h3>
               <div className="space-y-4">
-                {multipleCourses.map((course) => (
+                {multipleCourses?.map((course) => (
                   <div key={course.multipleCourseId} className="flex flex-col sm:flex-row items-center justify-between p-4 bg-purple-50 rounded-xl border border-purple-100 hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-4 w-full sm:w-auto mb-4 sm:mb-0">
                       <div className="w-16 h-16 bg-purple-200 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -242,13 +100,13 @@ export default function TeacherDashboardContent() {
                         <h4 className="font-bold text-gray-800 text-lg">{course.name}</h4>
                         <div className="text-sm text-gray-500 mt-1 flex flex-wrap gap-3">
                           <span className="flex items-center gap-1">💰 {course.cost.toLocaleString('vi-VN')}đ</span>
-                          <span className="flex items-center gap-1">⭐ {course.rate}</span>
-                          <span className="flex items-center gap-1">📚 {course.totalCourses} khóa học con</span>
+                          <span className="flex items-center gap-1">⭐ {Math.round(course.rate*10)/10}</span>
+                          
                         </div>
                       </div>
                     </div>
                     <button 
-                      onClick={() => handleEditCourse(course.multipleCourseId, true)}
+                      onClick={() => setTabActive("courses")}
                       className="w-full sm:w-auto px-6 py-2 bg-white border border-purple-300 text-purple-700 font-medium rounded-lg hover:bg-purple-100 transition-colors">
                       Sửa lộ trình
                     </button>
@@ -261,7 +119,7 @@ export default function TeacherDashboardContent() {
             <div>
               <h3 className="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">Khóa học lẻ (Single Courses)</h3>
               <div className="space-y-4">
-                {singleCourses.map((course) => {
+                {singleCourses?.map((course) => {
                   const bgColors = ['bg-green-100', 'bg-blue-100', 'bg-red-100', 'bg-yellow-100'];
                   const randomBg = bgColors[course.name.length % bgColors.length];
 
@@ -279,13 +137,13 @@ export default function TeacherDashboardContent() {
                           </h4>
                           <div className="text-sm text-gray-600 mt-1 flex flex-wrap gap-3">
                             <span className="flex items-center gap-1 font-medium text-red-500">💰 {course.cost.toLocaleString('vi-VN')}đ</span>
-                            <span className="flex items-center gap-1">⭐ {course.rate}</span>
-                            <span className="flex items-center gap-1">👥 {course.totalStudents} học viên</span>
+                            <span className="flex items-center gap-1">⭐ {Math.round(course.rate*10)/10}</span>
+                            
                           </div>
                         </div>
                       </div>
                       <button 
-                        onClick={() => handleEditCourse(course.courseId, false)}
+                        onClick={() => setTabActive("courses")}
                         className="w-full sm:w-auto px-6 py-2 bg-white/80 border border-transparent text-gray-800 font-medium rounded-lg hover:bg-white transition-colors">
                         Sửa khóa học
                       </button>

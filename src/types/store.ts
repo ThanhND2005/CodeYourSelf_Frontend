@@ -1,6 +1,6 @@
 
 export interface User {
-    userid : string, 
+    userId : string, 
     role : 'admin' | 'teacher' | 'parent',
 }
 export interface authState {

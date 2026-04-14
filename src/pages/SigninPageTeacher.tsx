@@ -1,4 +1,4 @@
-import React from "react";
+import React, { use } from "react";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useNavigate } from "react-router-dom";
 import { getRedirectPath } from "@/lib/navigation";
+import { TeacherService } from "@/services/TeacherService";
+import { useTeacherStore } from "@/stores/useTeacherStore";
 
 const SigninSchema = z.object({
   username: z.string().min(1, "Tên đăng nhập không được để trống"),
@@ -30,6 +32,7 @@ export default function SigninPageTeacher({
     resolver: zodResolver(SigninSchema),
   });
   const {signinTeacher} = useAuthStore()
+  const {setTeacher,setStudents,setSingleCourses,setMultipleCoures} =useTeacherStore()
   const navigate = useNavigate()
   const onSubmit = async (data: SigninFormValues) => {
     const {username,password} = data
@@ -39,6 +42,14 @@ export default function SigninPageTeacher({
       if(user)
       {
         const correctPath = getRedirectPath(user.role as string)
+        const {teacher} = await TeacherService.getInformation(user.userId)
+        const {students} = await TeacherService.getStudentsByTeacher(user.userId)
+        const {singleCourses} = await TeacherService.getSingleCourses(user.userId)
+        const {multipleCourses} = await TeacherService.getMultipleCourses(user.userId)
+        setStudents(students)
+        setTeacher(teacher)
+        setSingleCourses(singleCourses)
+        setMultipleCoures(multipleCourses)
         navigate(correctPath)
       }
     } catch (error) {
