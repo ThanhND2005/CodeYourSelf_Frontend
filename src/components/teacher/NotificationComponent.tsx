@@ -192,8 +192,6 @@ export default function NotificationPage() {
                   onChange={(e) => setFormData({...formData, receiverRole: e.target.value})}
                 >
                   <option value="Học viên">Học viên</option>
-                  <option value="Giáo viên">Giáo viên</option>
-                  <option value="Tất cả">Tất cả</option>
                 </select>
               </div>
 
