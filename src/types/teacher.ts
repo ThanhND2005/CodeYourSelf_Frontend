@@ -5,7 +5,7 @@ export interface Teacher {
     address: string,
     phone: string,
     gender: string,
-    createdAt: string,
+    createdAt: Date,
     bankName: string,
     bankAccount: string,
     avatarUrl: string,

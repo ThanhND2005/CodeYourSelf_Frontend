@@ -30,7 +30,7 @@ export const TeacherService = {
     patchAvatar : async (userId: string, avatar: File) =>{
         const formData = new FormData()
         formData.append('avatar',avatar)
-        await api.patch(`/patchAvatar/${userId}`,formData,{withCredentials: true})
+        await api.patch(`/teacher/patchAvatar/${userId}`,formData,{withCredentials: true})
     },
     getStudentsByTeacher : async (teacherId : string) =>{
         const res = await api.get(`/teacher/getStudentsByTeacher/${teacherId}`,{withCredentials: true})
@@ -43,5 +43,6 @@ export const TeacherService = {
     getMultipleCourses : async (teacherId: string) =>{
         const res = await api.get(`/teacher/getMultipleCourses/${teacherId}`,{withCredentials: true})
         return res.data
-    }
+    },
+    
 }

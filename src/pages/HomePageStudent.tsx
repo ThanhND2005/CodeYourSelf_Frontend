@@ -18,6 +18,7 @@ import CourseSearch from "@/components/student/CourseSearch";
 import { useCourseStore } from "@/stores/useCourseStore";
 import { StudentService } from "@/services/Student";
 import SingleCourseDetail from "@/components/student/CourseDetailSingle";
+import CourseLearning from "@/components/student/CourseLearning";
 
 const NotificationTab = () => <div>Trang Thông báo</div>;
 const ProfileTab = () => <div>Trang Hồ sơ</div>;
@@ -261,7 +262,7 @@ export default function HomePageStudent() {
       {/* CONTENT */}
       <div className="pt-[80px] pl-[90px]">
         <div className="p-6 overflow-y-auto min-h-[calc(100vh-80px)]">
-          {tabActive === "dashboard" && <DashBoard />}
+          {tabActive === "dashboard" && <CourseLearning />}
           {tabActive === "notification" && <NotificationTab />}
           {tabActive === "profile" && <ProfileTab />}
           {tabActive === "roadmap" && <RoadmapTab />}
