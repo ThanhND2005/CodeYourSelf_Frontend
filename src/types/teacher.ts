@@ -38,12 +38,22 @@ export interface MultipleCourse{
         teacherId: string, 
         imageUrl:string
 }
+export interface Notification {
+    senderId: string, 
+    receiverId: string,
+    notificationId: string, 
+    title: string, 
+    content: string, 
+    createdAt: Date
+}
 export interface teacherState {
     loading: boolean,
     teacher:Teacher | null,
     students: Student[] | null,
     singleCourses: SingleCourse[] | null,
     multipleCourses: MultipleCourse[] | null,
+    notifications: Notification[] | null 
+    setNotifications: (notifications : Notification[]) => void
     setTeacher : (teacher : Teacher) => void
     setStudents : (students : Student[]) => void
     setSingleCourses: (singleCourses : SingleCourse[]) => void 

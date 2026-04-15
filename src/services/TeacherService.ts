@@ -44,5 +44,15 @@ export const TeacherService = {
         const res = await api.get(`/teacher/getMultipleCourses/${teacherId}`,{withCredentials: true})
         return res.data
     },
+    postNotification : async(teacherId: string, title: string, content: string) => {
+        await api.post(`/teacher/postNotification/${teacherId}`,{title,content},{withCredentials: true})
+    },
+    getNotifications : async(teacherId: string) =>{
+        const res = await api.get(`/teacher/getNotifications/${teacherId}`,{withCredentials: true})
+        return res.data
+    },
+    deleteNotification : async(notificationId : string)=>{
+        await api.patch(`/teacher/deleteNotification/${notificationId}`,{},{withCredentials: true})
+    }
     
 }
