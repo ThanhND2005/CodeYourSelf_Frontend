@@ -32,6 +32,16 @@ export const TeacherService = {
         formData.append('avatar',avatar)
         await api.patch(`/teacher/patchAvatar/${userId}`,formData,{withCredentials: true})
     },
+    patchImage : async (courseId: string, image: File) =>{
+        const formData = new FormData()
+        formData.append('image',image)
+        await api.patch(`/teacher/patchImageCourse/${courseId}`,formData,{withCredentials: true})
+    },
+    patchImage2 : async (courseId: string, image: File) =>{
+        const formData = new FormData()
+        formData.append('image2',image)
+        await api.patch(`/teacher/patchImageMultipleCourse/${courseId}`,formData,{withCredentials: true})
+    },
     getStudentsByTeacher : async (teacherId : string) =>{
         const res = await api.get(`/teacher/getStudentsByTeacher/${teacherId}`,{withCredentials: true})
         return res.data
