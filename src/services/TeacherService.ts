@@ -82,6 +82,15 @@ export const TeacherService = {
     getVideo : async (courseId: string)=>{
         const res = await api.get(`/teacher/getVideo/${courseId}`,{withCredentials: true})
         return res.data
+    },
+    getStats : async (teacherId: string) =>{
+        const res  = await api.get(`/teacher/monthly-stats/${teacherId}`,{withCredentials: true})
+        return res.data
+    },
+    deleteMultipleCourse : async (courseId: string) =>{
+        await api.patch(`/teacher/deleteMultipleCourse/${courseId}`,{},{withCredentials : true})
+    },
+    deleteStudent : async (courseId: string, studentId: string) =>{
+        await api.patch('/teacher/deleteStudent',{courseId,studentId},{withCredentials: true})
     }
-    
 }

@@ -11,10 +11,13 @@ export interface Teacher {
     avatarUrl: string,
 }
 export interface Student {
-    userId : string,
-    name: string,
-    couseId: string, 
-    courseName: string,
+    courseId: string, 
+    studentId: string, 
+    status: string, 
+    createdAt : Date,
+    progress: number, 
+    name: string, 
+    avatarUrl: string
 }
 export interface SingleCourse{
     courseId: string, 
@@ -36,7 +39,8 @@ export interface MultipleCourse{
         deleted:number, 
         rate: number, 
         teacherId: string, 
-        imageUrl:string
+        imageUrl:string,
+        status: string
 }
 export interface Notification {
     senderId: string, 
@@ -52,6 +56,42 @@ export interface Video{
     videoId: string, 
     videoUrl: string, 
 }
+export interface Course {
+  courseId: string;           
+  name: string;              
+  cost: number;               
+  summary: string;            
+  deleted: number;           
+  teacherId: string;          
+  rate: number | null;        
+  multipleCourseId: string;   
+  status: string;             
+  imageUrl: string | null;   
+}
+export interface MultipleCourse2 {
+  multipleCourseId: string;   
+  name: string;              
+  cost: number;               
+  sumary: string | null;      
+  deleted: number;            
+  rate: number | null;       
+  teacherId: string;         
+  imageUrl: string | null;  
+  status: string;             
+}
+export interface MonthlyIncomeStat {
+  id: string;
+  periodMonth: number;
+  periodYear: number;
+  isCurrent: boolean;
+  totalCoursesSold: number;
+  totalProfit: number;       
+  commission: number;        
+  bestSellingCourse: Course; 
+  highestCourseSales: number;
+  newStudents: number;       
+}
+
 export interface teacherState {
     loading: boolean,
     teacher:Teacher | null,
@@ -60,6 +100,10 @@ export interface teacherState {
     multipleCourses: MultipleCourse[] | null,
     notifications: Notification[] | null 
     videos : Video[] | null
+    stats : MonthlyIncomeStat[] | null
+    course: Course | null 
+    setCourse: (course: Course) => void
+    setStats : (stats : MonthlyIncomeStat[]) => void
     setNotifications: (notifications : Notification[]) => void
     setTeacher : (teacher : Teacher) => void
     setStudents : (students : Student[]) => void
