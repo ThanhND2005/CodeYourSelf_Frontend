@@ -1,4 +1,4 @@
-import {type MultipleCourse, type Notification, type SingleCourse, type Student, type Teacher, type teacherState } from '@/types/teacher'
+import {type MultipleCourse, type Notification, type SingleCourse, type Student, type Teacher, type teacherState, type Video } from '@/types/teacher'
 import {create} from 'zustand'
 
 export const useTeacherStore = create<teacherState>((set, get) =>({
@@ -8,6 +8,8 @@ export const useTeacherStore = create<teacherState>((set, get) =>({
     singleCourses: null,
     multipleCourses:null,
     notifications: null, 
+    videos : null,
+    setVideos : (videos : Video[]) => set({videos}),
     setNotifications: (notifications : Notification[]) => set({notifications}),
     setTeacher: (teacher: Teacher) => set({teacher}),
     setStudents: (students : Student[]) => set({students}),

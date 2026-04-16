@@ -8,8 +8,11 @@ export const TeacherService = {
     patchInformation : async (userId: string,name: string, dob: Date,address: string,phone: string, gender: string, bankName: string, bankAccount: string) =>{
         await api.patch(`/teacher/patchInformation/${userId}`,{name,dob,address,phone,gender,bankName,bankAccount},{withCredentials: true})
     },
-    postCourse : async (userId: string, name: string, cost: string, summary: string) =>{
+    postCourse : async (userId: string, name: string, cost: number, summary: string) =>{
         await api.post(`/teacher/postCourse/${userId}`,{name, cost,summary},{withCredentials: true})
+    },
+    postMultipleCourse : async (userId: string, name: string, cost: number, summary: string) =>{
+        await api.post(`/teacher/postMultipleCourse/${userId}`,{name, cost,summary},{withCredentials: true})
     },
     addVideo : async (courseId: string, name: string, video: File) =>{
         const formData = new FormData()
@@ -32,12 +35,12 @@ export const TeacherService = {
         formData.append('avatar',avatar)
         await api.patch(`/teacher/patchAvatar/${userId}`,formData,{withCredentials: true})
     },
-    patchImage : async (courseId: string, image: File) =>{
+    patchImageCourse : async(courseId: string, image: File) =>{
         const formData = new FormData()
         formData.append('image',image)
         await api.patch(`/teacher/patchImageCourse/${courseId}`,formData,{withCredentials: true})
     },
-    patchImage2 : async (courseId: string, image: File) =>{
+    patchImageMultipleCourse : async(courseId: string, image: File) =>{
         const formData = new FormData()
         formData.append('image2',image)
         await api.patch(`/teacher/patchImageMultipleCourse/${courseId}`,formData,{withCredentials: true})
@@ -63,6 +66,22 @@ export const TeacherService = {
     },
     deleteNotification : async(notificationId : string)=>{
         await api.patch(`/teacher/deleteNotification/${notificationId}`,{},{withCredentials: true})
+    },
+    patchCourse: async (courseId: string, name: string, cost: number, summary: string) =>{
+        await api.patch(`/teacher/patchCourse/${courseId}`,{name, cost,summary},{withCredentials: true})
+    },
+    patchMultipleCourse : async(courseId: string, name: string, cost: number, summary: string) =>{
+        await api.patch(`/teacher/patchMultipleCourse/${courseId}`,{name, cost, summary},{withCredentials: true})
+    },
+    addCourse : async (courseId: string, multipleCourseId: string) =>{
+        await api.patch(`/teacher/addCourse/${multipleCourseId}`,{courseId},{withCredentials: true})
+    },
+    removeCourse: async (courseId: string) =>{
+        await api.patch(`/teacher/removeCourse`,{courseId},{withCredentials: true})
+    },
+    getVideo : async (courseId: string)=>{
+        const res = await api.get(`/teacher/getVideo/${courseId}`,{withCredentials: true})
+        return res.data
     }
     
 }

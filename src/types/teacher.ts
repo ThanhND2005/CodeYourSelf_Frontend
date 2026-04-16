@@ -46,6 +46,12 @@ export interface Notification {
     content: string, 
     createdAt: Date
 }
+export interface Video{
+    courseId: string, 
+    name: string,
+    videoId: string, 
+    videoUrl: string, 
+}
 export interface teacherState {
     loading: boolean,
     teacher:Teacher | null,
@@ -53,9 +59,11 @@ export interface teacherState {
     singleCourses: SingleCourse[] | null,
     multipleCourses: MultipleCourse[] | null,
     notifications: Notification[] | null 
+    videos : Video[] | null
     setNotifications: (notifications : Notification[]) => void
     setTeacher : (teacher : Teacher) => void
     setStudents : (students : Student[]) => void
     setSingleCourses: (singleCourses : SingleCourse[]) => void 
     setMultipleCoures : (multipleCourses: MultipleCourse[]) => void
+    setVideos : (videos : Video[]) => void
 }
