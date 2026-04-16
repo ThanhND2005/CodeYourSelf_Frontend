@@ -25,8 +25,9 @@ import TeacherProfile from "@/components/teacher/ProfileComponent";
 import NotificationPage from "@/components/teacher/NotificationComponent";
 import IncomeDashboard from "@/components/teacher/IncomeComponent";
 import { useTeacherStore } from "@/stores/useTeacherStore";
-import { useTabStudentStore, useTabTeacherStore } from "@/stores/useTabStore";
+import {useTabTeacherStore } from "@/stores/useTabStore";
 import { TeacherService } from "@/services/TeacherService";
+import CourseDetailTeacher from "@/components/teacher/CourseDetailTeacher";
 
 
 
@@ -34,7 +35,7 @@ import { TeacherService } from "@/services/TeacherService";
 
 export default function HomePageTeacher() {
   const {tabActive,setTabActive} = useTabTeacherStore()
-  const {setSingleCourses,setMultipleCoures} = useTeacherStore()
+  const {setSingleCourses,setMultipleCoures,setStats} = useTeacherStore()
   const signout = useAuthStore((state) => state.signout);
   const navigate = useNavigate();
   const onclickCourse = async() =>{
@@ -43,6 +44,11 @@ export default function HomePageTeacher() {
     setSingleCourses(singleCourses)
     setMultipleCoures(multipleCourses)
     setTabActive('courses')
+  }
+  const onclickIncome = async() => {
+    const {stats} = await TeacherService.getStats(teacher?.userId as string)
+    setStats(stats)
+    setTabActive('income')
   }
   const logout = async () => {
     try {
@@ -212,7 +218,7 @@ export default function HomePageTeacher() {
           </div>
 
           <div
-            onClick={() => setTabActive("income")}
+            onClick={() => onclickIncome()}
             className={cn(
               "flex flex-col items-center gap-1 cursor-pointer",
               tabActive === "income" && "text-[#851385]"
@@ -251,6 +257,7 @@ export default function HomePageTeacher() {
           {tabActive === "profile" && <TeacherProfile />}
           {tabActive === "income" && <IncomeDashboard />}
           {tabActive === "courses" && <CourseManagementComponent />}
+          {tabActive === "CourseDetail" && <CourseDetailTeacher/>}
         </div>
       </div>
     </div>

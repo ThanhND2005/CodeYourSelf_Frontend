@@ -20,23 +20,12 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTeacherStore } from "@/stores/useTeacherStore";
 import { TeacherService } from "@/services/TeacherService";
-import { nativeEnum } from "zod/v3";
 import type { SingleCourse, Video } from "@/types/teacher";
+import { useTabTeacherStore } from "@/stores/useTabStore";
 
 // --- BƯỚC 1: ĐỊNH NGHĨA TYPES ---
 
-interface Course {
-  courseId: string;
-  name: string;
-  cost: number;
-  summary: string;
-  deleted: number;
-  teacherId: string;
-  rate: number;
-  multipleCourseId: string | null;
-  status: string;
-  imageUrl: string;
-}
+
 
 interface MultipleCourse {
   multipleCourseId: string;
@@ -47,13 +36,9 @@ interface MultipleCourse {
   rate: number;
   teacherId: string;
   imageUrl: string;
+  status: string; // Thêm trường status cho combo
 }
 
-interface VideoLesson {
-  videoId: string;
-  name: string;
-  
-}
 
 // --- BƯỚC 2: ZOD SCHEMAS CHO VALIDATE FORM ---
 
@@ -72,7 +57,7 @@ const videoUploadSchema = z.object({
     .refine(
       (files) => files?.[0]?.size <= 10000 * 1024 * 1024,
       "Dung lượng tối đa 10000MB.",
-    ) // Giới hạn 100MB
+    ) // Giới hạn 10000MB
     .refine(
       (files) =>
         ["video/mp4", "video/webm", "video/quicktime"].includes(
@@ -102,9 +87,9 @@ const imageUploadSchema = z.object({
 
 type CourseFormData = z.infer<typeof multipleCourseschema>;
 type ImageUploadFormData = z.infer<typeof imageUploadSchema>;
-type VideoUploadFormData = z.infer<typeof videoUploadSchema>; // Type cho form video
+type VideoUploadFormData = z.infer<typeof videoUploadSchema>;
 
-// --- BƯỚC 3: MOCK DATA ---
+// --- BƯỚC 3: COMPONENT ---
 
 export default function CourseManagementComponent() {
   const {
@@ -112,19 +97,19 @@ export default function CourseManagementComponent() {
     multipleCourses,
     setSingleCourses,
     setMultipleCoures,
+    setCourse,
+    setStudents,
     setVideos,
     teacher,
-    videos
+   
   } = useTeacherStore();
+  const {setTabActive} = useTabTeacherStore()
   const [isSingleDialogOpen, setIsSingleDialogOpen] = useState(false);
   const [isMultiDialogOpen, setIsMultiDialogOpen] = useState(false);
-  const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false); // State quản lý Dialog Video
+  const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
 
-  const [editingSingleCourse, setEditingSingleCourse] = useState<SingleCourse | null>(
-    null,
-  );
-  const [editingMultiCourse, setEditingMultiCourse] =
-    useState<MultipleCourse | null>(null);
+  const [editingSingleCourse, setEditingSingleCourse] = useState<SingleCourse | null>(null);
+  const [editingMultiCourse, setEditingMultiCourse] = useState<MultipleCourse | null>(null);
 
   const [courseVideos, setCourseVideos] = useState<Video[]>([]);
   const [isLoadingProcess, setIsLoadingProcess] = useState(false);
@@ -137,34 +122,51 @@ export default function CourseManagementComponent() {
   } | null>(null);
 
   // --- THIẾT LẬP REACT-HOOK-FORM ---
+  const createSingleForm = useForm<CourseFormData>({ resolver: zodResolver(multipleCourseschema) });
+  const createMultiForm = useForm<CourseFormData>({ resolver: zodResolver(multipleCourseschema) });
+  const editSingleForm = useForm<CourseFormData>({ resolver: zodResolver(multipleCourseschema) });
+  const editMultiForm = useForm<CourseFormData>({ resolver: zodResolver(multipleCourseschema) });
+  const videoForm = useForm<VideoUploadFormData>({ resolver: zodResolver(videoUploadSchema) });
+  const imageForm = useForm<ImageUploadFormData>({ resolver: zodResolver(imageUploadSchema) });
 
-  const createSingleForm = useForm<CourseFormData>({
-    resolver: zodResolver(multipleCourseschema),
-  });
-  const createMultiForm = useForm<CourseFormData>({
-    resolver: zodResolver(multipleCourseschema),
-  });
-  const editSingleForm = useForm<CourseFormData>({
-    resolver: zodResolver(multipleCourseschema),
-  });
-  const editMultiForm = useForm<CourseFormData>({
-    resolver: zodResolver(multipleCourseschema),
-  });
+  // --- HANDLERS XÓA / XEM CHI TIẾT ---
+  const handleDeleteSingleCourse = async (courseId: string) => {
+    try {
+      await TeacherService.deleteCourse(courseId)
+      const {singleCourses : singleCourses1} = await TeacherService.getSingleCourses(teacher?.userId as string)
+      setSingleCourses(singleCourses1)
+    } catch (error) {
+      console.error(error)
+    }
+  };
 
-  // Form thêm video
-  const videoForm = useForm<VideoUploadFormData>({
-    resolver: zodResolver(videoUploadSchema),
-  });
+  const handleDeleteMultiCourse = async (multiCourseId: string) => {
+    try {
+      await TeacherService.deleteMultipleCourse(multiCourseId)
+      const {multipleCourses : multipleCourses1} = await TeacherService.getMultipleCourses(teacher?.userId as string)
+      setMultipleCoures(multipleCourses1)
+    } catch (error) {
+      console.error(error)
+    }
+  };
 
-  // Hook form dành riêng cho chức năng Upload ảnh
-  const imageForm = useForm<ImageUploadFormData>({
-    resolver: zodResolver(imageUploadSchema),
-  });
+  const handleViewSingleDetails = async(course: SingleCourse) => {
+    setCourse(course)
+    try {
+      const {students} = await TeacherService.getStudents(course.courseId as string)
+      setStudents(students)
+      setTabActive('CourseDetail')
+    } catch (error) {
+      console.error(error)
+    }
+  };
 
-  
+  const handleViewMultiDetails = (multiCourse: MultipleCourse) => {
+    console.log("Xem chi tiết combo:", multiCourse);
+    // TODO: Chuyển hướng hoặc mở Dialog xem chi tiết combo
+  };
 
   // --- HANDLERS: UPLOAD ẢNH QUA RHF ---
-
   const triggerImageUpload = (id: string, type: "single" | "combo") => {
     setTargetImageUpload({ id, type });
     if (fileInputRef.current) fileInputRef.current.click();
@@ -177,13 +179,11 @@ export default function CourseManagementComponent() {
     try {
       if (type == "single") {
         await TeacherService.patchImageCourse(courseId, file);
-        const { singleCourses: singleCourses1 } =
-          await TeacherService.getSingleCourses(teacher?.userId as string);
+        const { singleCourses: singleCourses1 } = await TeacherService.getSingleCourses(teacher?.userId as string);
         setSingleCourses(singleCourses1);
       } else if (type == "combo") {
         await TeacherService.patchImageMultipleCourse(courseId, file);
-        const { multipleCourses: multipleCourses1 } =
-          await TeacherService.getMultipleCourses(teacher?.userId as string);
+        const { multipleCourses: multipleCourses1 } = await TeacherService.getMultipleCourses(teacher?.userId as string);
         setMultipleCoures(multipleCourses1);
       }
     } catch (error) {
@@ -199,25 +199,14 @@ export default function CourseManagementComponent() {
     setTargetImageUpload(null);
   };
 
-  const {
-    ref: rhfImageRef,
-    onChange: rhfImageOnChange,
-    ...rhfImageRest
-  } = imageForm.register("file");
+  const { ref: rhfImageRef, onChange: rhfImageOnChange, ...rhfImageRest } = imageForm.register("file");
 
   // --- HANDLERS: TẠO MỚI & CHỈNH SỬA ---
-
   const onSubmitCreateSingle = async (data: CourseFormData) => {
     const { name, cost, summary } = data;
     try {
-      await TeacherService.postCourse(
-        teacher?.userId as string,
-        name,
-        cost,
-        summary,
-      );
-      const { singleCourses: singleCourses1 } =
-        await TeacherService.getSingleCourses(teacher?.userId as string);
+      await TeacherService.postCourse(teacher?.userId as string, name, cost, summary);
+      const { singleCourses: singleCourses1 } = await TeacherService.getSingleCourses(teacher?.userId as string);
       setSingleCourses(singleCourses1);
     } catch (error) {
       console.error(error);
@@ -230,14 +219,8 @@ export default function CourseManagementComponent() {
   const onSubmitCreateMulti = async (data: CourseFormData) => {
     const { name, cost, summary } = data;
     try {
-      await TeacherService.postMultipleCourse(
-        teacher?.userId as string,
-        name,
-        cost,
-        summary,
-      );
-      const { multipleCourses: multipleCourses1 } =
-        await TeacherService.getMultipleCourses(teacher?.userId as string);
+      await TeacherService.postMultipleCourse(teacher?.userId as string, name, cost, summary);
+      const { multipleCourses: multipleCourses1 } = await TeacherService.getMultipleCourses(teacher?.userId as string);
       setMultipleCoures(multipleCourses1);
     } catch (error) {
       console.error(error);
@@ -249,10 +232,9 @@ export default function CourseManagementComponent() {
 
   const handleOpenEditSingle = async (course: SingleCourse) => {
     setEditingSingleCourse(course);
-    
-    const {videos: videos1} = await TeacherService.getVideo(course.courseId as string)
-    setVideos(videos1)
-    const currentVideo = useTeacherStore.getState().videos
+    const { videos: videos1 } = await TeacherService.getVideo(course.courseId as string);
+    setVideos(videos1);
+    const currentVideo = useTeacherStore.getState().videos;
     setCourseVideos(currentVideo ?? []);
     editSingleForm.reset({
       name: course.name,
@@ -266,14 +248,13 @@ export default function CourseManagementComponent() {
     const courseId = editingSingleCourse?.courseId;
     try {
       await TeacherService.patchCourse(courseId as string, name, cost, summary);
-      const { singleCourses: singleCourses1 } =
-        await TeacherService.getSingleCourses(teacher?.userId as string);
+      const { singleCourses: singleCourses1 } = await TeacherService.getSingleCourses(teacher?.userId as string);
       setSingleCourses(singleCourses1);
     } catch (error) {
       console.error(error);
-    }finally{
-      setEditingSingleCourse(null)
-      editSingleForm.reset()
+    } finally {
+      setEditingSingleCourse(null);
+      editSingleForm.reset();
     }
   };
 
@@ -291,58 +272,50 @@ export default function CourseManagementComponent() {
     const courseId = editingMultiCourse?.multipleCourseId as string;
     try {
       await TeacherService.patchMultipleCourse(courseId, name, cost, summary);
-      const { multipleCourses: multipleCourses1 } =
-        await TeacherService.getMultipleCourses(teacher?.userId as string);
+      const { multipleCourses: multipleCourses1 } = await TeacherService.getMultipleCourses(teacher?.userId as string);
       setMultipleCoures(multipleCourses1);
     } catch (error) {
       console.error(error);
-    }finally{
-      setEditingMultiCourse(null)
-      editMultiForm.reset()
+    } finally {
+      setEditingMultiCourse(null);
+      editMultiForm.reset();
     }
   };
 
-  // Handler xử lý submit form Video
   const onSubmitAddVideo = async (data: VideoUploadFormData) => {
-      const videoFile = data.videoFile[0]
-      try {
-        await TeacherService.addVideo(editingSingleCourse?.courseId as string, data.name, videoFile)
-        const {videos : videos1} = await TeacherService.getVideo(editingSingleCourse?.courseId as string)
-        setCourseVideos(videos1)
-      } catch (error) {
-        console.error(error)
-      }finally{
-        setIsVideoDialogOpen(false)
-        videoForm.reset()
-      }
+    const videoFile = data.videoFile[0];
+    try {
+      await TeacherService.addVideo(editingSingleCourse?.courseId as string, data.name, videoFile);
+      const { videos: videos1 } = await TeacherService.getVideo(editingSingleCourse?.courseId as string);
+      setCourseVideos(videos1);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsVideoDialogOpen(false);
+      videoForm.reset();
+    }
   };
 
-  const executeToggleCourseInMulti = async (
-    courseId: string,
-    isAdding: boolean,
-  ) => {
-    if(isAdding === false){
+  const executeToggleCourseInMulti = async (courseId: string, isAdding: boolean) => {
+    if (isAdding === false) {
       try {
-        await TeacherService.removeCourse(courseId)
-        const { singleCourses: singleCourses1 } =
-        await TeacherService.getSingleCourses(teacher?.userId as string);
-      setSingleCourses(singleCourses1);
+        await TeacherService.removeCourse(courseId);
+        const { singleCourses: singleCourses1 } = await TeacherService.getSingleCourses(teacher?.userId as string);
+        setSingleCourses(singleCourses1);
       } catch (error) {
-        console.error(error)
+        console.error(error);
       }
     }
     if (!editingMultiCourse) return;
-    if(isAdding === true){
+    if (isAdding === true) {
       const targetComboId = isAdding ? editingMultiCourse.multipleCourseId : null;
       try {
-        await TeacherService.addCourse(courseId, targetComboId as string)
-        const { singleCourses: singleCourses1 } =
-          await TeacherService.getSingleCourses(teacher?.userId as string);
+        await TeacherService.addCourse(courseId, targetComboId as string);
+        const { singleCourses: singleCourses1 } = await TeacherService.getSingleCourses(teacher?.userId as string);
         setSingleCourses(singleCourses1);
       } catch (error) {
-        console.error(error)
+        console.error(error);
       }
-
     }
   };
 
@@ -368,21 +341,15 @@ export default function CourseManagementComponent() {
       {/* HEADER */}
       <div className="flex justify-between items-start mb-10">
         <div>
-          <h1 className="text-3xl font-bold mb-6 text-gray-900">
-            Quản lý khóa học
-          </h1>
+          <h1 className="text-3xl font-bold mb-6 text-gray-900">Quản lý khóa học</h1>
           <div className="flex gap-4">
             <div className="bg-white rounded-2xl p-5 shadow-sm min-w-[150px]">
               <div className="text-sm text-gray-500 mb-1">Tổng khóa đơn</div>
-              <span className="text-3xl font-bold text-purple-700">
-                {multipleCourses?.length}
-              </span>
+              <span className="text-3xl font-bold text-purple-700">{singleCourses?.length || 0}</span>
             </div>
             <div className="bg-white rounded-2xl p-5 shadow-sm min-w-[150px]">
               <div className="text-sm text-gray-500 mb-1">Tổng khóa Combo</div>
-              <span className="text-3xl font-bold text-pink-600">
-                {multipleCourses?.length}
-              </span>
+              <span className="text-3xl font-bold text-pink-600">{multipleCourses?.length || 0}</span>
             </div>
           </div>
         </div>
@@ -426,18 +393,12 @@ export default function CourseManagementComponent() {
               >
                 <div className="flex items-center gap-4 flex-1">
                   <div
-                    onClick={() =>
-                      triggerImageUpload(multi.multipleCourseId, "combo")
-                    }
+                    onClick={() => triggerImageUpload(multi.multipleCourseId, "combo")}
                     className={`relative w-20 h-20 bg-pink-50 rounded-xl overflow-hidden cursor-pointer group shrink-0 border border-pink-100 ${isLoadingProcess && targetImageUpload?.id === multi.multipleCourseId ? "opacity-50" : ""}`}
-                    name="Bấm để đổi ảnh"
+                    title="Bấm để đổi ảnh"
                   >
                     {multi.imageUrl ? (
-                      <img
-                        src={multi.imageUrl}
-                        alt={multi.name}
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={multi.imageUrl} alt={multi.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-pink-300">
                         <BookOpen size={28} />
@@ -449,12 +410,8 @@ export default function CourseManagementComponent() {
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-bold text-gray-800">
-                      {multi.name}
-                    </h3>
-                    <p className="text-sm text-gray-500 line-clamp-1">
-                      {multi.summary}
-                    </p>
+                    <h3 className="text-lg font-bold text-gray-800">{multi.name}</h3>
+                    <p className="text-sm text-gray-500 line-clamp-1">{multi.summary}</p>
                     <div className="flex items-center gap-3 mt-1 text-xs font-medium">
                       <span className="text-pink-700 bg-pink-50 px-2 py-1 rounded-md">
                         {multi.cost.toLocaleString("vi-VN")} VNĐ
@@ -462,15 +419,39 @@ export default function CourseManagementComponent() {
                       <span className="text-purple-700 bg-purple-50 px-2 py-1 rounded-md">
                         Bao gồm {includedCount} khóa
                       </span>
+                      <span
+                        className={`px-2 py-1 rounded-md ${multi.status === "Đã duyệt" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}
+                      >
+                        {multi.status || "Chưa duyệt"}
+                      </span>
                     </div>
                   </div>
                 </div>
+
                 <div className="flex items-center gap-3 ml-4 shrink-0">
+                  {/* LOGIC ĐIỀU KIỆN CHO NÚT SỬA / XEM CHI TIẾT */}
+                  {multi.status === "Đã duyệt" ? (
+                    <button
+                      onClick={() => handleViewMultiDetails(multi)}
+                      className="flex items-center gap-2 bg-blue-100 text-blue-700 hover:bg-blue-200 px-4 py-2 rounded-xl font-medium transition-colors"
+                    >
+                      <BookOpen size={18} /> Xem chi tiết
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleOpenEditMulti(multi)}
+                      className="flex items-center gap-2 bg-pink-100 text-pink-700 hover:bg-pink-200 px-4 py-2 rounded-xl font-medium transition-colors"
+                    >
+                      <Edit size={18} /> Sửa & Khóa con
+                    </button>
+                  )}
+
+                  {/* NÚT XÓA COMBO */}
                   <button
-                    onClick={() => handleOpenEditMulti(multi)}
-                    className="flex items-center gap-2 bg-pink-100 text-pink-700 hover:bg-pink-200 px-4 py-2 rounded-xl font-medium transition-colors"
+                    onClick={() => handleDeleteMultiCourse(multi.multipleCourseId)}
+                    className="flex items-center gap-2 bg-red-100 text-red-700 hover:bg-red-200 px-4 py-2 rounded-xl font-medium transition-colors"
                   >
-                    <Edit size={18} /> Sửa nội dung & Khóa con
+                    <Trash2 size={18} /> Xóa
                   </button>
                 </div>
               </div>
@@ -494,14 +475,10 @@ export default function CourseManagementComponent() {
                 <div
                   onClick={() => triggerImageUpload(course.courseId, "single")}
                   className={`relative w-20 h-20 bg-purple-50 rounded-xl overflow-hidden cursor-pointer group shrink-0 border border-purple-100 ${isLoadingProcess && targetImageUpload?.id === course.courseId ? "opacity-50" : ""}`}
-                  name="Bấm để đổi ảnh"
+                  title="Bấm để đổi ảnh"
                 >
                   {course.imageUrl ? (
-                    <img
-                      src={course.imageUrl}
-                      alt={course.name}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={course.imageUrl} alt={course.name} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-purple-300">
                       <ImageIcon size={28} />
@@ -513,12 +490,8 @@ export default function CourseManagementComponent() {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-bold text-gray-800">
-                    {course.name}
-                  </h3>
-                  <p className="text-sm text-gray-500 line-clamp-1">
-                    {course.summary}
-                  </p>
+                  <h3 className="text-lg font-bold text-gray-800">{course.name}</h3>
+                  <p className="text-sm text-gray-500 line-clamp-1">{course.summary}</p>
                   <div className="flex items-center gap-3 mt-1 text-xs font-medium">
                     <span className="text-purple-700 bg-purple-50 px-2 py-1 rounded-md">
                       {course.cost.toLocaleString("vi-VN")} VNĐ
@@ -536,12 +509,31 @@ export default function CourseManagementComponent() {
                   </div>
                 </div>
               </div>
+
               <div className="flex items-center gap-3 ml-4 shrink-0">
+                {/* LOGIC ĐIỀU KIỆN CHO NÚT SỬA / XEM CHI TIẾT */}
+                {course.status === "Đã duyệt" ? (
+                  <button
+                    onClick={() => handleViewSingleDetails(course)}
+                    className="flex items-center gap-2 bg-blue-100 text-blue-700 hover:bg-blue-200 px-4 py-2 rounded-xl font-medium transition-colors"
+                  >
+                    <BookOpen size={18} /> Xem chi tiết
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleOpenEditSingle(course)}
+                    className="flex items-center gap-2 bg-purple-100 text-purple-700 hover:bg-purple-200 px-4 py-2 rounded-xl font-medium transition-colors"
+                  >
+                    <Edit size={18} /> Sửa thông tin & Video
+                  </button>
+                )}
+
+                {/* NÚT XÓA KHÓA ĐƠN */}
                 <button
-                  onClick={() => handleOpenEditSingle(course)}
-                  className="flex items-center gap-2 bg-purple-100 text-purple-700 hover:bg-purple-200 px-4 py-2 rounded-xl font-medium transition-colors"
+                  onClick={() => handleDeleteSingleCourse(course.courseId)}
+                  className="flex items-center gap-2 bg-red-100 text-red-700 hover:bg-red-200 px-4 py-2 rounded-xl font-medium transition-colors"
                 >
-                  <Edit size={18} /> Sửa thông tin & Video
+                  <Trash2 size={18} /> Xóa
                 </button>
               </div>
             </div>
@@ -566,30 +558,21 @@ export default function CourseManagementComponent() {
               <Film size={24} /> Thêm Video Bài Giảng
             </h2>
 
-            <form
-              onSubmit={videoForm.handleSubmit(onSubmitAddVideo)}
-              className="space-y-4"
-            >
+            <form onSubmit={videoForm.handleSubmit(onSubmitAddVideo)} className="space-y-4">
               <div>
-                <label className="text-sm font-semibold text-gray-700">
-                  Tiêu đề bài giảng
-                </label>
+                <label className="text-sm font-semibold text-gray-700">Tiêu đề bài giảng</label>
                 <input
                   placeholder="Ví dụ: Bài 1 - Lời nói đầu..."
                   {...videoForm.register("name")}
                   className="w-full border border-gray-300 rounded-xl p-3 mt-1 focus:outline-purple-500 focus:ring-2 focus:ring-purple-200"
                 />
                 {videoForm.formState.errors.name && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {videoForm.formState.errors.name.message}
-                  </p>
+                  <p className="text-red-500 text-xs mt-1">{videoForm.formState.errors.name.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-gray-700">
-                  File Video (.mp4, .webm, .mov)
-                </label>
+                <label className="text-sm font-semibold text-gray-700">File Video (.mp4, .webm, .mov)</label>
                 <div className="mt-1 flex items-center justify-center w-full">
                   <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 border-gray-300">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -606,11 +589,9 @@ export default function CourseManagementComponent() {
                     />
                   </label>
                 </div>
-                {/* Hiển thị tên file nếu đã chọn */}
                 {videoForm.watch("videoFile")?.[0] && (
                   <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
-                    <CheckCircle size={14} /> Đã chọn:{" "}
-                    {videoForm.watch("videoFile")[0].name}
+                    <CheckCircle size={14} /> Đã chọn: {videoForm.watch("videoFile")[0].name}
                   </p>
                 )}
                 {videoForm.formState.errors.videoFile && (
@@ -627,14 +608,7 @@ export default function CourseManagementComponent() {
                   className={`w-full text-white py-3 rounded-xl font-medium shadow-md transition-all flex items-center justify-center gap-2 
                     ${isLoadingProcess ? "bg-purple-400 cursor-not-allowed" : "bg-purple-700 hover:bg-purple-800"}`}
                 >
-                  {isLoadingProcess ? (
-                    <span>Đang tải lên và xử lý...</span>
-                  ) : (
-                    <>
-                      {" "}
-                      <Plus size={20} /> Thêm Video{" "}
-                    </>
-                  )}
+                  {isLoadingProcess ? <span>Đang tải lên và xử lý...</span> : <><Plus size={20} /> Thêm Video</>}
                 </button>
               </div>
             </form>
@@ -645,21 +619,12 @@ export default function CourseManagementComponent() {
       {/* DIALOG TẠO KHÓA ĐƠN */}
       {isSingleDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          {/* ... code cũ giữ nguyên ... */}
           <div className="bg-white rounded-3xl w-full max-w-lg p-6 relative">
-            <button
-              onClick={() => setIsSingleDialogOpen(false)}
-              className="absolute top-4 right-4"
-            >
+            <button onClick={() => setIsSingleDialogOpen(false)} className="absolute top-4 right-4">
               <X />
             </button>
-            <h2 className="text-2xl font-bold mb-4 text-purple-800">
-              Tạo khóa học đơn
-            </h2>
-            <form
-              onSubmit={createSingleForm.handleSubmit(onSubmitCreateSingle)}
-              className="space-y-4"
-            >
+            <h2 className="text-2xl font-bold mb-4 text-purple-800">Tạo khóa học đơn</h2>
+            <form onSubmit={createSingleForm.handleSubmit(onSubmitCreateSingle)} className="space-y-4">
               <div>
                 <label className="text-sm font-medium">Tên khóa học</label>
                 <input
@@ -667,9 +632,7 @@ export default function CourseManagementComponent() {
                   className="w-full border rounded-lg p-2 mt-1 focus:outline-purple-500"
                 />
                 {createSingleForm.formState.errors.name && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {createSingleForm.formState.errors.name.message}
-                  </p>
+                  <p className="text-red-500 text-xs mt-1">{createSingleForm.formState.errors.name.message}</p>
                 )}
               </div>
               <div>
@@ -680,9 +643,7 @@ export default function CourseManagementComponent() {
                   className="w-full border rounded-lg p-2 mt-1 focus:outline-purple-500"
                 />
                 {createSingleForm.formState.errors.cost && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {createSingleForm.formState.errors.cost.message}
-                  </p>
+                  <p className="text-red-500 text-xs mt-1">{createSingleForm.formState.errors.cost.message}</p>
                 )}
               </div>
               <div>
@@ -693,15 +654,10 @@ export default function CourseManagementComponent() {
                   className="w-full border rounded-lg p-2 mt-1 focus:outline-purple-500"
                 />
                 {createSingleForm.formState.errors.summary && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {createSingleForm.formState.errors.summary.message}
-                  </p>
+                  <p className="text-red-500 text-xs mt-1">{createSingleForm.formState.errors.summary.message}</p>
                 )}
               </div>
-              <button
-                type="submit"
-                className="w-full bg-purple-700 text-white py-2 rounded-lg font-medium"
-              >
+              <button type="submit" className="w-full bg-purple-700 text-white py-2 rounded-lg font-medium">
                 Tạo khóa học
               </button>
             </form>
@@ -712,19 +668,12 @@ export default function CourseManagementComponent() {
       {/* DIALOG TẠO COMBO */}
       {isMultiDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          {/* ... code cũ giữ nguyên ... */}
           <div className="bg-white rounded-3xl w-full max-w-lg p-6 relative">
-            <button
-              onClick={() => setIsMultiDialogOpen(false)}
-              className="absolute top-4 right-4"
-            >
+            <button onClick={() => setIsMultiDialogOpen(false)} className="absolute top-4 right-4">
               <X />
             </button>
             <h2 className="text-2xl font-bold mb-4 text-pink-700">Tạo Combo</h2>
-            <form
-              onSubmit={createMultiForm.handleSubmit(onSubmitCreateMulti)}
-              className="space-y-4"
-            >
+            <form onSubmit={createMultiForm.handleSubmit(onSubmitCreateMulti)} className="space-y-4">
               <div>
                 <label className="text-sm font-medium">Tên Combo</label>
                 <input
@@ -732,9 +681,7 @@ export default function CourseManagementComponent() {
                   className="w-full border rounded-lg p-2 mt-1 focus:outline-pink-500"
                 />
                 {createMultiForm.formState.errors.name && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {createMultiForm.formState.errors.name.message}
-                  </p>
+                  <p className="text-red-500 text-xs mt-1">{createMultiForm.formState.errors.name.message}</p>
                 )}
               </div>
               <div>
@@ -753,10 +700,7 @@ export default function CourseManagementComponent() {
                   className="w-full border rounded-lg p-2 mt-1 focus:outline-pink-500"
                 />
               </div>
-              <button
-                type="submit"
-                className="w-full bg-pink-600 text-white py-2 rounded-lg font-medium"
-              >
+              <button type="submit" className="w-full bg-pink-600 text-white py-2 rounded-lg font-medium">
                 Tạo Combo
               </button>
             </form>
@@ -769,43 +713,26 @@ export default function CourseManagementComponent() {
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
             <div className="p-6 border-b flex justify-between bg-purple-50">
-              <h2 className="text-xl font-bold">
-                Chỉnh sửa: {editingSingleCourse.name}
-              </h2>
-              <button onClick={() => setEditingSingleCourse(null)}>
-                <X />
-              </button>
+              <h2 className="text-xl font-bold">Chỉnh sửa: {editingSingleCourse.name}</h2>
+              <button onClick={() => setEditingSingleCourse(null)}><X /></button>
             </div>
 
             <div className="p-6 overflow-y-auto flex-1 flex flex-col md:flex-row gap-8">
               <div className="flex-1 border-r pr-6 border-gray-100">
-                <h3 className="font-semibold text-lg mb-4 text-purple-800">
-                  Chỉnh sửa thông tin
-                </h3>
-                <form
-                  onSubmit={editSingleForm.handleSubmit(
-                    onSubmitUpdateSingleInfo,
-                  )}
-                  className="space-y-4"
-                >
+                <h3 className="font-semibold text-lg mb-4 text-purple-800">Chỉnh sửa thông tin</h3>
+                <form onSubmit={editSingleForm.handleSubmit(onSubmitUpdateSingleInfo)} className="space-y-4">
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">
-                      Tên khóa học
-                    </label>
+                    <label className="block text-sm text-gray-600 mb-1">Tên khóa học</label>
                     <input
                       {...editSingleForm.register("name")}
                       className="w-full border border-gray-300 rounded-lg p-2 focus:border-purple-500 outline-none"
                     />
                     {editSingleForm.formState.errors.name && (
-                      <span className="text-red-500 text-xs">
-                        {editSingleForm.formState.errors.name.message}
-                      </span>
+                      <span className="text-red-500 text-xs">{editSingleForm.formState.errors.name.message}</span>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">
-                      Giá
-                    </label>
+                    <label className="block text-sm text-gray-600 mb-1">Giá</label>
                     <input
                       type="number"
                       {...editSingleForm.register("cost")}
@@ -813,9 +740,7 @@ export default function CourseManagementComponent() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">
-                      Mô tả
-                    </label>
+                    <label className="block text-sm text-gray-600 mb-1">Mô tả</label>
                     <textarea
                       {...editSingleForm.register("summary")}
                       rows={4}
@@ -834,10 +759,7 @@ export default function CourseManagementComponent() {
 
               <div className="flex-1 flex flex-col">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-semibold text-lg text-purple-800">
-                    Quản lý Video bài giảng
-                  </h3>
-                  {/* NÚT MỞ DIALOG THÊM VIDEO MỚI */}
+                  <h3 className="font-semibold text-lg text-purple-800">Quản lý Video bài giảng</h3>
                   <button
                     onClick={() => setIsVideoDialogOpen(true)}
                     disabled={isLoadingProcess}
@@ -848,29 +770,14 @@ export default function CourseManagementComponent() {
                 </div>
                 <div className="space-y-3 flex-1 overflow-y-auto">
                   {courseVideos.length === 0 && (
-                    <p className="text-gray-400 text-sm italic">
-                      Chưa có video bài giảng nào.
-                    </p>
+                    <p className="text-gray-400 text-sm italic">Chưa có video bài giảng nào.</p>
                   )}
                   {courseVideos.map((video) => (
-                    <div
-                      key={video.videoId}
-                      className="flex flex-col gap-1 p-3 bg-gray-50 border rounded-xl hover:bg-gray-100 transition"
-                    >
+                    <div key={video.videoId} className="flex flex-col gap-1 p-3 bg-gray-50 border rounded-xl hover:bg-gray-100 transition">
                       <div className="flex items-center gap-3">
-                        <PlaySquare
-                          size={20}
-                          className="text-purple-500 shrink-0"
-                        />
+                        <PlaySquare size={20} className="text-purple-500 shrink-0" />
                         <div className="flex-1">
-                          <p className="text-sm font-bold text-gray-800">
-                            {video.name}
-                          </p>
-                          {video.description && (
-                            <p className="text-xs text-gray-500 line-clamp-1">
-                              {video.description}
-                            </p>
-                          )}
+                          <p className="text-sm font-bold text-gray-800">{video.name}</p>
                         </div>
                       </div>
                     </div>
@@ -885,44 +792,28 @@ export default function CourseManagementComponent() {
       {/* DIALOG EDIT MULTI */}
       {editingMultiCourse && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
-          {/* ... code cũ giữ nguyên ... */}
           <div className="bg-white rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
             <div className="p-6 border-b flex justify-between bg-pink-50">
-              <h2 className="text-xl font-bold">
-                Chỉnh sửa Combo: {editingMultiCourse.name}
-              </h2>
-              <button onClick={() => setEditingMultiCourse(null)}>
-                <X />
-              </button>
+              <h2 className="text-xl font-bold">Chỉnh sửa Combo: {editingMultiCourse.name}</h2>
+              <button onClick={() => setEditingMultiCourse(null)}><X /></button>
             </div>
 
             <div className="p-6 overflow-y-auto flex-1 flex flex-col md:flex-row gap-8">
               <div className="flex-1 border-r pr-6 border-gray-100">
-                <h3 className="font-semibold text-lg mb-4 text-pink-800">
-                  Thông tin chung
-                </h3>
-                <form
-                  onSubmit={editMultiForm.handleSubmit(onSubmitUpdateMultiInfo)}
-                  className="space-y-4"
-                >
+                <h3 className="font-semibold text-lg mb-4 text-pink-800">Thông tin chung</h3>
+                <form onSubmit={editMultiForm.handleSubmit(onSubmitUpdateMultiInfo)} className="space-y-4">
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">
-                      Tên Combo
-                    </label>
+                    <label className="block text-sm text-gray-600 mb-1">Tên Combo</label>
                     <input
                       {...editMultiForm.register("name")}
                       className="w-full border border-gray-300 rounded-lg p-2 focus:border-pink-500 outline-none"
                     />
                     {editMultiForm.formState.errors.name && (
-                      <span className="text-red-500 text-xs">
-                        {editMultiForm.formState.errors.name.message}
-                      </span>
+                      <span className="text-red-500 text-xs">{editMultiForm.formState.errors.name.message}</span>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">
-                      Giá
-                    </label>
+                    <label className="block text-sm text-gray-600 mb-1">Giá</label>
                     <input
                       type="number"
                       {...editMultiForm.register("cost")}
@@ -930,9 +821,7 @@ export default function CourseManagementComponent() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">
-                      Mô tả
-                    </label>
+                    <label className="block text-sm text-gray-600 mb-1">Mô tả</label>
                     <textarea
                       {...editMultiForm.register("summary")}
                       rows={4}
@@ -950,35 +839,21 @@ export default function CourseManagementComponent() {
               </div>
 
               <div className="flex-1">
-                <h3 className="font-semibold text-lg text-pink-800 mb-2">
-                  Cấu trúc Combo
-                </h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  Thêm hoặc gỡ các khóa học đơn lẻ.
-                </p>
+                <h3 className="font-semibold text-lg text-pink-800 mb-2">Cấu trúc Combo</h3>
+                <p className="text-sm text-gray-500 mb-4">Thêm hoặc gỡ các khóa học đơn lẻ.</p>
                 <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                  {singleCourses?.filter((t) => t.status === 'Đã duyệt' && (t.multipleCourseId===null || t.multipleCourseId === editingMultiCourse.multipleCourseId))?.map((course) => {
-                    const isIncluded =
-                      course.multipleCourseId ===
-                      editingMultiCourse.multipleCourseId;
-                    const isBelongToOther =
-                      course.multipleCourseId !== null && !isIncluded;
+                  {singleCourses?.filter((t) => t.status === 'Đã duyệt' && (t.multipleCourseId === null || t.multipleCourseId === editingMultiCourse.multipleCourseId))?.map((course) => {
+                    const isIncluded = course.multipleCourseId === editingMultiCourse.multipleCourseId;
+                    const isBelongToOther = course.multipleCourseId !== null && !isIncluded;
                     return (
-                      <div
-                        key={course.courseId}
-                        className={`flex items-center justify-between p-3 border rounded-xl ${isIncluded ? "bg-pink-50 border-pink-200" : "bg-white border-gray-200"}`}
-                      >
-                        <p
-                          className={`text-sm font-medium ${isIncluded ? "text-pink-800" : "text-gray-700"}`}
-                        >
+                      <div key={course.courseId} className={`flex items-center justify-between p-3 border rounded-xl ${isIncluded ? "bg-pink-50 border-pink-200" : "bg-white border-gray-200"}`}>
+                        <p className={`text-sm font-medium ${isIncluded ? "text-pink-800" : "text-gray-700"}`}>
                           {course.name}
                         </p>
                         {isIncluded ? (
                           <button
                             disabled={isLoadingProcess}
-                            onClick={() =>
-                              executeToggleCourseInMulti(course.courseId, false)
-                            }
+                            onClick={() => executeToggleCourseInMulti(course.courseId, false)}
                             className="text-red-500 flex items-center gap-1 text-xs font-medium bg-white px-2 py-1 rounded shadow-sm hover:bg-red-50"
                           >
                             <MinusCircle size={14} /> Gỡ
@@ -987,12 +862,7 @@ export default function CourseManagementComponent() {
                           !isBelongToOther && (
                             <button
                               disabled={isLoadingProcess}
-                              onClick={() =>
-                                executeToggleCourseInMulti(
-                                  course.courseId,
-                                  true,
-                                )
-                              }
+                              onClick={() => executeToggleCourseInMulti(course.courseId, true)}
                               className="text-pink-600 flex items-center gap-1 text-xs font-medium bg-pink-50 px-2 py-1 rounded shadow-sm hover:bg-pink-100"
                             >
                               <PlusCircle size={14} /> Thêm
