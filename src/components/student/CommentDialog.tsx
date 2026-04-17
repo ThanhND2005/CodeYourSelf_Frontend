@@ -1,140 +1,226 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
+import { createPortal } from "react-dom";
+
+type User = {
+  userId: string;
+  username: string;
+  avatar: string;
+};
+
+type Reply = {
+  replyId: string;
+  content: string;
+  createdAt: string;
+  user: User;
+};
+
+type Comment = {
+  commentId: string;
+  content: string;
+  createdAt: string;
+  user: User;
+  replies: Reply[];
+};
 
 export default function CommentDialog(
-    { open, onClose }: { open: boolean; onClose: () => void }
-  ) {
-  const [message, setMessage] = useState("");
+  { open, onClose }: { open: boolean; onClose: () => void }
+) {
+  const currentUser: User = {
+    userId: "acc-008",
+    username: "Nguyễn Linh",
+    avatar: "https://i.pravatar.cc/40?img=1",
+  };
 
-  const [comments, setComments] = useState([
+  const [comments, setComments] = useState<Comment[]>([
     {
       commentId: "cmt-001",
-      content: "Bài đầu dễ hiểu thật",
-      createdAt: "2026-04-17 10:30",
+      content: "Bài này dễ hiểu thật",
+      createdAt: "10:00",
       user: {
         userId: "acc-008",
         username: "Nguyễn Linh",
+        avatar: "https://i.pravatar.cc/40?img=1",
       },
+      replies: [
+        {
+          replyId: "rep-001",
+          content: "Chuẩn luôn em 👍",
+          createdAt: "10:01",
+          user: {
+            userId: "acc-002",
+            username: "Thầy Đạt",
+            avatar: "https://i.pravatar.cc/40?img=2",
+          },
+        },
+      ],
     },
     {
       commentId: "cmt-002",
-      content: "Đúng rồi, giảng dễ hiểu 😆",
-      createdAt: "2026-04-17 10:32",
+      content: "Có ai hiểu phần controller chưa?",
+      createdAt: "10:05",
       user: {
-        userId: "acc-002",
-        username: "Thầy Đạt",
+        userId: "acc-009",
+        username: "Minh Anh",
+        avatar: "https://i.pravatar.cc/40?img=3",
       },
+      replies: [],
     },
   ]);
 
-  const currentUserId = "acc-008"; // giả lập user đang login
-  const bottomRef = useRef<HTMLDivElement | null>(null);
-  
+  const [newComment, setNewComment] = useState("");
+  const [replyBox, setReplyBox] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
 
   if (!open) return null;
 
-  const handleSend = () => {
-    if (!message.trim()) return;
+  // 🔥 thêm comment
+  const handleAddComment = () => {
+    if (!newComment.trim()) return;
 
-    const newComment = {
+    const newCmt: Comment = {
       commentId: "cmt-" + Date.now(),
-      content: message,
-      createdAt: new Date().toLocaleString(),
-      user: {
-        userId: currentUserId,
-        username: "Bạn",
-      },
+      content: newComment,
+      createdAt: new Date().toLocaleTimeString(),
+      user: currentUser,
+      replies: [],
     };
 
-    setComments((prev) => [...prev, newComment]);
-    setMessage("");
+    setComments([newCmt, ...comments]);
+    setNewComment("");
   };
 
-  // auto scroll xuống cuối
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [comments]);
+  // 🔥 thêm reply
+  const handleAddReply = (commentId: string) => {
+    if (!replyText.trim()) return;
 
-  return (
+    const newReply: Reply = {
+      replyId: "rep-" + Date.now(),
+      content: replyText,
+      createdAt: new Date().toLocaleTimeString(),
+      user: currentUser,
+    };
+
+    setComments((prev) =>
+      prev.map((cmt) =>
+        cmt.commentId === commentId
+          ? { ...cmt, replies: [...cmt.replies, newReply] }
+          : cmt
+      )
+    );
+
+    setReplyText("");
+    setReplyBox(null);
+  };
+
+  return createPortal(
     <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-[9999]"
       onClick={onClose}
     >
       <div
-        className="bg-white w-[650px] h-[520px] rounded-2xl flex flex-col border border-[#851385] shadow-xl overflow-hidden"
+        className="bg-white w-[750px] h-[600px] rounded-2xl flex flex-col shadow-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* HEADER */}
-        <div className="px-5 py-4 border-b font-semibold text-[#851385] flex justify-between items-center">
-          <span>Chat khóa học</span>
-
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-black text-lg"
-          >
-            ✕
-          </button>
+        <div className="px-5 py-4 border-b font-semibold text-[#851385] flex justify-between">
+          <span>Bình luận khóa học</span>
+          <button onClick={onClose}>✕</button>
         </div>
 
-        {/* MESSAGE LIST */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50">
-          {comments.map((cmt) => {
-            const isMe = cmt.user.userId === currentUserId;
+        {/* ADD COMMENT */}
+        <div className="p-4 border-b flex gap-3">
+          <img src={currentUser.avatar} className="w-10 h-10 rounded-full" />
 
-            return (
-              <div
-                key={cmt.commentId}
-                className={`flex ${isMe ? "justify-end" : "justify-start"}`}
-              >
-                <div className="max-w-[70%]">
-                  {!isMe && (
-                    <div className="text-xs text-gray-500 mb-1">
-                      {cmt.user.username}
-                    </div>
-                  )}
-
-                  <div
-                    className={`px-4 py-2 rounded-2xl text-sm break-words
-                      ${
-                        isMe
-                          ? "bg-[#851385] text-white rounded-br-none"
-                          : "bg-white text-gray-800 border rounded-bl-none"
-                      }
-                    `}
-                  >
-                    {cmt.content}
-                  </div>
-
-                  <div className="text-[10px] text-gray-400 mt-1 text-right">
-                    {cmt.createdAt}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
-          <div ref={bottomRef} />
-        </div>
-
-        {/* INPUT */}
-        <div className="p-3 border-t flex items-center gap-2 bg-white">
           <input
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Nhập tin nhắn..."
-            className="flex-1 bg-gray-100 px-4 py-2 rounded-full outline-none focus:ring-2 focus:ring-[#851385]"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSend();
-            }}
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Viết bình luận..."
+            className="flex-1 bg-gray-100 px-4 py-2 rounded-full outline-none"
           />
 
           <button
-            onClick={handleSend}
-            className="px-4 py-2 rounded-full text-white bg-[#851385] hover:bg-[#6a0f6a] transition"
+            onClick={handleAddComment}
+            className="px-4 py-2 bg-[#851385] text-white rounded-full"
           >
-            Gửi
+            Đăng
           </button>
         </div>
+
+        {/* LIST */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6">
+          {comments.map((cmt) => (
+            <div key={cmt.commentId}>
+              {/* COMMENT CHA */}
+              <div className="flex gap-3">
+                <img src={cmt.user.avatar} className="w-10 h-10 rounded-full" />
+
+                <div className="flex-1">
+                  <div className="font-medium text-sm">
+                    {cmt.user.username}
+                  </div>
+
+                  <div className="text-sm mt-1">{cmt.content}</div>
+
+                  <div className="text-xs text-gray-400 mt-1">
+                    {cmt.createdAt}
+                  </div>
+
+                  <button
+                    onClick={() => setReplyBox(cmt.commentId)}
+                    className="text-sm text-[#851385] mt-1"
+                  >
+                    Phản hồi
+                  </button>
+
+                  {/* REPLY INPUT */}
+                  {replyBox === cmt.commentId && (
+                    <div className="flex gap-2 mt-2">
+                      <input
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        placeholder="Nhập phản hồi..."
+                        className="flex-1 bg-gray-100 px-3 py-1 rounded-full text-sm"
+                      />
+
+                      <button
+                        onClick={() => handleAddReply(cmt.commentId)}
+                        className="text-sm bg-[#851385] text-white px-3 rounded-full"
+                      >
+                        Gửi
+                      </button>
+                    </div>
+                  )}
+
+                  {/* REPLIES */}
+                  <div className="mt-3 space-y-3 ml-6 border-l pl-4">
+                    {cmt.replies.map((rep) => (
+                      <div key={rep.replyId} className="flex gap-2">
+                        <img
+                          src={rep.user.avatar}
+                          className="w-8 h-8 rounded-full"
+                        />
+
+                        <div>
+                          <div className="text-sm font-medium">
+                            {rep.user.username}
+                          </div>
+
+                          <div className="text-sm">{rep.content}</div>
+
+                          <div className="text-xs text-gray-400">
+                            {rep.createdAt}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
