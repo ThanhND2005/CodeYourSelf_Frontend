@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import CommentDialog from "./CommentDialog";
 
 const courseData = {
   name: "Java Springboot",
@@ -13,16 +14,17 @@ const courseData = {
 export default function CourseLearning() {
   const [openRating, setOpenRating] = useState(false);
   const [openComment, setOpenComment] = useState(false);
+  const [rating, setRating] = useState(0);
 
   return (
-    // Đã thêm: max-w-6xl (thu hẹp), mx-auto (căn giữa), mt-24 (cách header), h-[85vh] (giới hạn chiều cao)
-    <div className="flex flex-col max-w-6xl mx-auto mt-6 h-[78vh] bg-gray-100 rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+    <div className="flex flex-col max-w-7xl mx-auto mt-8 h-[82vh] bg-gray-100 rounded-2xl shadow-xl overflow-hidden border border-gray-200">
       
       {/* MAIN */}
       <div className="flex flex-1 overflow-hidden">
         
         {/* LEFT */}
         <div className="flex-1 flex flex-col">
+          
           {/* VIDEO */}
           <div className="flex items-center justify-center bg-black aspect-video text-white text-xl">
             <iframe
@@ -43,26 +45,31 @@ export default function CourseLearning() {
               background: "linear-gradient(135deg, #851385, #FBD8F8)",
             }}
           >
-            <h2 className="text-xl font-semibold">
+            <h2 className="text-2xl font-semibold leading-snug">
               {courseData.courseVideo[0].videoName}
             </h2>
 
-            <p className="text-sm opacity-90">{courseData.teacherName}</p>
+            <p className="text-sm opacity-90 mt-1">
+              {courseData.teacherName}
+            </p>
 
-            <div className="mt-4 flex gap-3">
-              <button
-                className="bg-white text-[#851385] px-4 py-2 rounded-lg font-medium hover:scale-105 transition shadow-sm"
-                onClick={() => setOpenRating(true)}
-              >
-                Đánh giá
-              </button>
+            {/* BUTTONS */}
+            <div className="mt-5 flex items-center justify-between">
+              <div className="flex gap-3">
+                <button
+                  className="px-5 py-2 rounded-xl bg-white text-[#851385] font-medium shadow hover:shadow-md hover:scale-105 transition"
+                  onClick={() => setOpenRating(true)}
+                >
+                  ⭐ Đánh giá
+                </button>
 
-              <button
-                className="bg-white text-[#851385] px-4 py-2 rounded-lg font-medium hover:scale-105 transition shadow-sm"
-                onClick={() => setOpenComment(true)}
-              >
-                Bình luận
-              </button>
+                <button
+                  className="px-5 py-2 rounded-xl bg-[#851385] text-white font-medium shadow hover:bg-[#6a0f6a] hover:scale-105 transition"
+                  onClick={() => setOpenComment(true)}
+                >
+                  💬 Bình luận
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -91,28 +98,51 @@ export default function CourseLearning() {
       {/* ================= DIALOG ĐÁNH GIÁ ================= */}
       {openRating && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center backdrop-blur-sm">
-          <div className="bg-white w-96 p-6 rounded-xl shadow-2xl animate-fade-in">
-            <h2 className="text-lg font-semibold mb-4">Đánh giá khóa học</h2>
+          <div className="bg-white w-80 p-6 rounded-xl shadow-2xl animate-fade-in">
+            <h2 className="text-lg font-semibold mb-5 text-center">
+              Đánh giá khóa học
+            </h2>
 
-            <div className="flex gap-2 text-2xl mb-4 cursor-pointer">
-              ⭐ ⭐ ⭐ ⭐ ⭐
+            {/* STAR */}
+            <div className="flex justify-center gap-2 mb-6">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <span
+                  key={star}
+                  onClick={() => setRating(star)}
+                  className={`text-3xl cursor-pointer transition ${
+                    star <= rating ? "text-yellow-400" : "text-gray-300"
+                  } hover:scale-125`}
+                >
+                  ★
+                </span>
+              ))}
             </div>
 
-            <textarea
-              placeholder="Nhập đánh giá..."
-              className="w-full border border-gray-300 p-3 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-[#851385] resize-none"
-              rows={4}
-            />
-
+            {/* ACTION */}
             <div className="flex justify-end gap-3">
               <button
-                onClick={() => setOpenRating(false)}
+                onClick={() => {
+                  setOpenRating(false);
+                  setRating(0);
+                }}
                 className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition font-medium"
               >
                 Hủy
               </button>
 
-              <button className="px-4 py-2 rounded-lg bg-[#851385] hover:bg-[#6a0f6a] transition text-white font-medium">
+              <button
+                onClick={() => {
+                  console.log("Rating:", rating);
+                  setOpenRating(false);
+                  setRating(0);
+                }}
+                disabled={rating === 0}
+                className={`px-4 py-2 rounded-lg text-white font-medium transition ${
+                  rating === 0
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-[#851385] hover:bg-[#6a0f6a]"
+                }`}
+              >
                 Gửi
               </button>
             </div>
@@ -120,33 +150,11 @@ export default function CourseLearning() {
         </div>
       )}
 
-      {/* ================= DIALOG BÌNH LUẬN ================= */}
-      {openComment && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center backdrop-blur-sm">
-          <div className="bg-white w-96 p-6 rounded-xl shadow-2xl animate-fade-in">
-            <h2 className="text-lg font-semibold mb-4">Bình luận</h2>
-
-            <textarea
-              placeholder="Nhập bình luận..."
-              className="w-full border border-gray-300 p-3 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-[#851385] resize-none"
-              rows={4}
-            />
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setOpenComment(false)}
-                className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition font-medium"
-              >
-                Hủy
-              </button>
-
-              <button className="px-4 py-2 rounded-lg bg-[#851385] hover:bg-[#6a0f6a] transition text-white font-medium">
-                Gửi
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* COMMENT DIALOG */}
+      <CommentDialog 
+        open={openComment} 
+        onClose={() => setOpenComment(false)} 
+      />
     </div>
   );
 }
