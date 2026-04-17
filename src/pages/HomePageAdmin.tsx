@@ -15,12 +15,16 @@ import UserManageMain from "@/components/admin/User";
 import CourseApprovalPage from "@/components/admin/CourseWaiting";
 import DoanhSoPage from "@/components/admin/Stat";
 import AdminDashboard from "../components/admin/DashBoard";
+import { useTabAdminStore } from "@/stores/useTabStore";
+import { useAdminStore } from "@/stores/useAdminStore";
+import { AdminServices } from "@/services/AdminService";
 
 
 
 export default function HomePageAdmin() {
-  const [tabActive, setTabActive] = useState("dashboard");
+  const {tabActive,setTabActive} = useTabAdminStore()
   const signout = useAuthStore((state) => state.signout)
+  const {setCourses,setPayments,setStudents,setTeachers,setWaitCourses,setReceivedNotificatons,setNotifications,} = useAdminStore()
   const navigate = useNavigate()
   const logout = async () =>{
     try {
@@ -30,6 +34,29 @@ export default function HomePageAdmin() {
     } catch (error) {
       console.error(error)
     }
+  }
+  const onlickDashBoard = async () => {
+    const {students} = await AdminServices.getStudents()
+    const {teachers} = await AdminServices.getTeachers()
+    const {courses} =await AdminServices.getCourses()
+    const {studentBills} = await AdminServices.getStudentBills()
+    const {waitCourses} = await AdminServices.getWaitCourses()
+    const {receivedNotifications} = await AdminServices.ReceiveNotification()
+    setWaitCourses(waitCourses)
+    setStudents(students)
+    setTeachers(teachers)
+    setCourses(courses)
+    setPayments(studentBills)
+    setReceivedNotificatons(receivedNotifications)
+    setTabActive('dashboard')
+  }
+  const onclickNotification = async () =>{
+    setTabActive('notification')
+    const {notifications} = await AdminServices.getNotificaitons()
+    const {receivedNotifications} = await AdminServices.ReceiveNotification()
+    setReceivedNotificatons(receivedNotifications)
+    setNotifications(notifications)
+    
   }
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#F8F2F9] to-[#CBABCF]">
@@ -60,7 +87,7 @@ export default function HomePageAdmin() {
         <div className="flex flex-col items-center gap-6 text-gray-700">
 
           <div
-            onClick={() => setTabActive("dashboard")}
+            onClick={() => onlickDashBoard()}
             className={cn(
               "flex flex-col items-center gap-1 cursor-pointer",
               tabActive === "dashboard" && "text-[#851385]"
@@ -71,7 +98,7 @@ export default function HomePageAdmin() {
           </div>
 
           <div
-            onClick={() => setTabActive("notification")}
+            onClick={() => onclickNotification()}
             className={cn(
               "flex flex-col items-center gap-1 cursor-pointer",
               tabActive === "notification" && "text-[#851385]"

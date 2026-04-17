@@ -1,223 +1,263 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Plus, Inbox, Send, Trash2, X } from 'lucide-react';
+import { useAdminStore } from '@/stores/useAdminStore';
+import { AdminServices } from '@/services/AdminService';
 
-// 1. Interface
+// 1. Interfaces
 export interface Notification {
   notificationId: string;
   senderId: string;
-  senderRole: string;
   receiverId: string;
   receiverRole: string;
-  deleted: number;
   title: string;
   content: string;
   createdAt: string;
 }
 
-// 2. Mock Data
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    notificationId: 'notif_001',
-    senderId: 'admin_123',
-    senderRole: 'Admin',
-    receiverId: 'group_teacher',
-    receiverRole: 'Giáo viên',
-    deleted: 0,
-    title: 'Lịch trả thu nhập',
-    content: 'Hiện tại thông tin thu nhập, các giáo viên vào kiểm tra và nếu có thắc mắc vui lòng ý kiến lại trong hôm nay.',
-    createdAt: '25 tháng 2 năm 2026'
-  },
-  {
-    notificationId: 'notif_002',
-    senderId: 'admin_123',
-    senderRole: 'Admin',
-    receiverId: 'group_student',
-    receiverRole: 'Học viên',
-    deleted: 0,
-    title: 'Ưu đãi hè',
-    content: 'Các khóa học ngôn ngữ lập trình cơ bản được giảm giá 15%. Đăng ký ngay, thời gian ưu đãi chỉ trong 2 tuần từ ngày 25/02/2026 đến 11/03/2026.',
-    createdAt: '24 tháng 2 năm 2026'
-  }
-];
+export interface DashboardNotificationDTO {
+  id: string;
+  message: string;
+  createdAt: string;
+  senderAvatarUrl: string;
+}
+
+
+// 3. Validation Schema với Zod
+const notificationSchema = z.object({
+  targetRole: z.enum(['Giáo viên', 'Học viên', 'Tất cả'], {
+    required_error: 'Vui lòng chọn đối tượng nhận thông báo',
+  }),
+  title: z.string().min(1, 'Vui lòng nhập tiêu đề thông báo').max(200, 'Tiêu đề không được vượt quá 200 ký tự'),
+  description: z.string().min(1, 'Vui lòng nhập nội dung thông báo'),
+});
+
+type NotificationFormValues = z.infer<typeof notificationSchema>;
+
+
 
 export default function NotificationPageContent() {
   // --- STATE ---
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const {notifications,receivedNotifications,setNotifications} = useAdminStore()
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  
-  const [formData, setFormData] = useState({
-    targetTeacher: false,
-    targetStudent: false,
-    title: '',
-    description: ''
+
+  // --- FORM SETUP ---
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<NotificationFormValues>({
+    resolver: zodResolver(notificationSchema),
+    defaultValues: {
+      targetRole: 'Giáo viên',
+      title: '',
+      description: '',
+    },
   });
 
   // --- HANDLERS ---
   const handleDeleteNotification = async (notificationId: string) => {
+     try {
+      await AdminServices.deleteNotification(notificationId)
+      const {notifications : notifications1} = await AdminServices.getNotificaitons()
+      setNotifications(notifications1)
+     } catch (error) {
+      console.error(error)
+     }
+  };
+
+  const onSubmit = async (data: NotificationFormValues) => {
+    const {targetRole,title,description} = data
     try {
-      console.log(`Calling API to delete notification: ${notificationId}`);
-      setNotifications(prev => prev.filter(n => n.notificationId !== notificationId));
-      alert('Đã xóa thông báo thành công!');
+      await AdminServices.postNotification(targetRole,title,description)
+      const {notifications : notifications1} = await AdminServices.getNotificaitons()
+      setNotifications(notifications1)
     } catch (error) {
-      console.error('Lỗi khi xóa thông báo:', error);
+      console.error(error)
+    }finally{
+      handleCloseDialog()
     }
   };
 
-  const handleCreateNotification = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (!formData.title || !formData.description) {
-        alert('Vui lòng nhập đầy đủ tiêu đề và nội dung.');
-        return;
-      }
-      if (!formData.targetTeacher && !formData.targetStudent) {
-        alert('Vui lòng chọn ít nhất một đối tượng nhận.');
-        return;
-      }
-
-      const receiverRole = formData.targetTeacher && formData.targetStudent 
-        ? 'Tất cả' 
-        : (formData.targetTeacher ? 'Giáo viên' : 'Học viên');
-
-      // Thêm data giả vào UI
-      const newNotif: Notification = {
-        notificationId: `notif_${Math.random().toString(36).substr(2, 9)}`,
-        senderId: 'admin_123', // Lấy từ auth context thực tế
-        senderRole: 'Admin',
-        receiverId: 'new_group',
-        receiverRole: receiverRole,
-        deleted: 0,
-        title: formData.title,
-        content: formData.description,
-        createdAt: 'Hôm nay' // Cần format lại khi làm thật
-      };
-
-      setNotifications([newNotif, ...notifications]);
-      setIsDialogOpen(false);
-      setFormData({ targetTeacher: false, targetStudent: false, title: '', description: '' });
-      
-    } catch (error) {
-      console.error('Lỗi khi tạo thông báo:', error);
-    }
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    reset(); // Xóa trắng dữ liệu form khi đóng
   };
 
-  // --- JSX TRẢ VỀ (Chỉ Main Content + Dialog) ---
+  // --- JSX ---
   return (
     <>
-      {/* KHU VỰC NỘI DUNG CHÍNH */}
-      {/* Xóa max-w-4xl, dùng w-full h-full để tràn viền và đổi màu nền đồng nhất */}
-      <div className="w-full h-full p-8 overflow-y-auto ">
-        <div className="w-full flex flex-col h-full">
-          
-          {/* Tiêu đề & Nút Tạo */}
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Thông báo !</h2>
-            <button 
+      <div className="w-full h-full  overflow-y-auto">
+        <div className="w-full flex flex-col h-full gap-8 mx-auto">
+          {/* Header & Nút Tạo */}
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold text-gray-800">Quản lý Thông báo</h2>
+            <button
               onClick={() => setIsDialogOpen(true)}
-              className="bg-[#8b2c8b] hover:bg-[#702170] text-white px-6 py-2.5 rounded-lg font-medium transition-colors shadow-md whitespace-nowrap"
+              className="bg-[#8b2c8b] hover:bg-[#702170] text-white px-6 py-2.5 rounded-lg font-medium transition-colors shadow-md whitespace-nowrap flex items-center gap-2"
             >
-              Tạo thông báo
+              <Plus size={18} /> Tạo thông báo
             </button>
           </div>
 
-          {/* Danh sách thông báo */}
-          <div className="bg-[#fadcf5] rounded-2xl p-8 shadow-sm border border-pink-100 flex-1">
-            <h3 className="text-xl font-bold mb-6 text-gray-800">Các thông báo đã gửi:</h3>
-            
-            <div className="space-y-6">
-              {notifications.map((notif) => (
-                <div key={notif.notificationId} className="bg-white rounded-xl p-6 flex justify-between items-center shadow-sm gap-4">
-                  <div className="space-y-1.5 text-sm text-gray-700 flex-1">
-                    <p><span className="font-bold">Người nhận:</span> {notif.receiverRole}</p>
-                    <p><span className="font-bold">Tiêu đề:</span> {notif.title}</p>
-                    <p><span className="font-bold">Nội dung:</span> {notif.content}</p>
-                    <p><span className="font-bold">Ngày tạo:</span> {notif.createdAt}</p>
-                  </div>
-                  <button 
-                    onClick={() => handleDeleteNotification(notif.notificationId)}
-                    className="bg-[#e74c3c] hover:bg-red-600 text-white px-8 py-2.5 rounded-lg font-medium transition-colors whitespace-nowrap h-fit"
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* DANH SÁCH THÔNG BÁO ĐÃ NHẬN */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col">
+              <h3 className="text-lg font-bold mb-4 text-gray-800 flex items-center gap-2">
+                <Inbox className="text-purple-600" size={20} /> Thông báo đã nhận
+                <span className="bg-purple-100 text-purple-700 text-xs py-1 px-2 rounded-full font-semibold">
+                  {receivedNotifications?.length}
+                </span>
+              </h3>
+
+              <div className="space-y-4 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+                {receivedNotifications?.map((notif) => (
+                  <div
+                    key={notif.id}
+                    className="bg-gray-50/80 rounded-xl p-4 flex items-start gap-4 border border-gray-100 transition-colors hover:bg-gray-100"
                   >
-                    Xóa
-                  </button>
-                </div>
-              ))}
-              
-              {notifications.length === 0 && (
-                <p className="text-center text-gray-500 italic mt-10">Chưa có thông báo nào.</p>
-              )}
+                    <img src={notif.senderAvatarUrl} alt="avatar" className="w-10 h-10 rounded-full shadow-sm" />
+                    <div className="space-y-1 text-sm text-gray-700 flex-1">
+                      <p className="font-medium text-gray-900">{notif.message}</p>
+                      <p className="text-xs text-gray-500">{notif.createdAt}</p>
+                    </div>
+                  </div>
+                ))}
+                {receivedNotifications?.length === 0 && (
+                  <p className="text-center text-gray-500 italic mt-6">Không có thông báo mới.</p>
+                )}
+              </div>
+            </div>
+
+            {/* DANH SÁCH THÔNG BÁO ĐÃ GỬI */}
+            <div className="bg-[#fadcf5] rounded-2xl p-6 shadow-sm border border-pink-100 flex flex-col">
+              <h3 className="text-lg font-bold mb-4 text-gray-800 flex items-center gap-2">
+                <Send className="text-pink-600" size={20} /> Thông báo đã gửi
+              </h3>
+
+              <div className="space-y-4 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+                {notifications?.map((notif) => (
+                  <div
+                    key={notif.notificationId}
+                    className="bg-white rounded-xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center shadow-sm gap-4"
+                  >
+                    <div className="space-y-1.5 text-sm text-gray-700 flex-1">
+                      <p>
+                        <span className="font-semibold text-[#8b2c8b]">Gửi đến:</span> {notif.receiverRole}
+                      </p>
+                      <p>
+                        <span className="font-semibold">Tiêu đề:</span> {notif.title}
+                      </p>
+                      <p className="line-clamp-2">
+                        <span className="font-semibold">Nội dung:</span> {notif.content}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-2">{notif.createdAt}</p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteNotification(notif.notificationId)}
+                      className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-1.5"
+                    >
+                      <Trash2 size={16} /> Xóa
+                    </button>
+                  </div>
+                ))}
+                {notifications?.length === 0 && (
+                  <p className="text-center text-gray-500 italic mt-6">Chưa gửi thông báo nào.</p>
+                )}
+              </div>
             </div>
           </div>
-
         </div>
       </div>
 
-      {/* MODAL / DIALOG TẠO THÔNG BÁO (Giữ nguyên như cũ) */}
+      {/* MODAL / DIALOG TẠO THÔNG BÁO */}
       {isDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl w-[550px] p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
-            <h2 className="text-center text-xl font-bold mb-6 text-gray-800">Tạo thông báo</h2>
-            
-            <form onSubmit={handleCreateNotification} className="space-y-5">
-              {/* Checkbox */}
-              <div className="flex items-center gap-4 text-sm font-medium text-gray-700">
-                <span className="w-24">Người nhận:</span>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
-                    checked={formData.targetTeacher}
-                    onChange={(e) => setFormData({...formData, targetTeacher: e.target.checked})}
-                  />
-                  Giáo viên
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
-                    checked={formData.targetStudent}
-                    onChange={(e) => setFormData({...formData, targetStudent: e.target.checked})}
-                  />
-                  Học viên
-                </label>
+          <div className="bg-white rounded-3xl w-[550px] p-8 shadow-2xl animate-in fade-in zoom-in duration-200 relative">
+            <button 
+              onClick={handleCloseDialog}
+              className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X size={24} />
+            </button>
+            <h2 className="text-center text-xl font-bold mb-6 text-gray-800">Tạo thông báo mới</h2>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              {/* Target Role */}
+              <div className="flex flex-col gap-2 text-sm font-medium text-gray-700">
+                <span className="mb-1">Đối tượng nhận thông báo:</span>
+                <div className="flex items-center gap-6 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                  {['Giáo viên', 'Học viên', 'Tất cả'].map((role) => (
+                    <label
+                      key={role}
+                      className="flex items-center gap-2 cursor-pointer hover:text-[#8b2c8b] transition-colors"
+                    >
+                      <input
+                        type="radio"
+                        value={role}
+                        {...register('targetRole')}
+                        className="w-4 h-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                      />
+                      {role}
+                    </label>
+                  ))}
+                </div>
+                {errors.targetRole && (
+                  <span className="text-red-500 text-xs">{errors.targetRole.message}</span>
+                )}
               </div>
 
               {/* Title */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-gray-700">Tiêu đề:</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder="Nhập vào tiêu đề ..."
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400 bg-gray-50/50 text-sm"
-                  value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  {...register('title')}
+                  className={`w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:ring-1 bg-gray-50/50 text-sm ${
+                    errors.title ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-purple-400 focus:ring-purple-400'
+                  }`}
                 />
+                {errors.title && (
+                  <span className="text-red-500 text-xs">{errors.title.message}</span>
+                )}
               </div>
 
               {/* Description */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-gray-700">Mô tả:</label>
-                <textarea 
-                  rows={3}
-                  placeholder="Nhập vào mô tả ..."
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400 bg-gray-50/50 text-sm resize-none"
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                <label className="text-sm font-medium text-gray-700">Mô tả chi tiết:</label>
+                <textarea
+                  rows={4}
+                  placeholder="Nhập nội dung thông báo ..."
+                  {...register('description')}
+                  className={`w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:ring-1 bg-gray-50/50 text-sm resize-none ${
+                    errors.description ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-purple-400 focus:ring-purple-400'
+                  }`}
                 />
+                {errors.description && (
+                  <span className="text-red-500 text-xs">{errors.description.message}</span>
+                )}
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-center gap-4 pt-4">
-                <button 
+              <div className="flex justify-end gap-3 pt-4">
+                <button
                   type="button"
-                  onClick={() => setIsDialogOpen(false)}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-8 py-2.5 rounded-lg font-medium transition-colors"
+                  onClick={handleCloseDialog}
+                  disabled={isSubmitting}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50"
                 >
                   Hủy
                 </button>
-                <button 
+                <button
                   type="submit"
-                  className="bg-[#8b2c8b] hover:bg-[#702170] text-white px-8 py-2.5 rounded-lg font-medium transition-colors shadow-md"
+                  disabled={isSubmitting}
+                  className="bg-[#8b2c8b] hover:bg-[#702170] text-white px-6 py-2.5 rounded-lg font-medium transition-colors shadow-md disabled:opacity-50 flex items-center gap-2"
                 >
-                  Tạo thông báo
+                  {isSubmitting ? 'Đang gửi...' : 'Gửi thông báo'}
                 </button>
               </div>
             </form>

@@ -1,4 +1,4 @@
-import {type tabStudent, type tabTeacher } from '@/types/tab'
+import {type tabAdmin, type tabStudent, type tabTeacher } from '@/types/tab'
 import {create} from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 
@@ -23,6 +23,18 @@ export const useTabTeacherStore  = create<tabTeacher>()(
         }),
         {
             name:'tab-teacher',
+        }
+    )
+    
+)
+export const useTabAdminStore  = create<tabAdmin>()(
+    persist(
+        (set, get) =>({
+            tabActive : 'dashboard',
+            setTabActive: (tab : string) => set({tabActive : tab})
+        }),
+        {
+            name:'tab-admin',
         }
     )
     

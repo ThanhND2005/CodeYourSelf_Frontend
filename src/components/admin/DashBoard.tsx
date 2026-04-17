@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -8,129 +8,35 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import {
+  Users,
+  GraduationCap,
+  BookOpen,
+  CircleDollarSign,
+  BookMarked,
+  UserPlus,
+} from "lucide-react";
+import { useAdminStore } from "@/stores/useAdminStore";
+import { useTabAdminStore } from "@/stores/useTabStore";
 
-// ─── Mock data tuân thủ theo CSDL ───────────────────────────────────────────
+// ─── 1. Interface DTO - Cấu trúc dữ liệu API cần trả về ─────────────────────
+// CHÚ THÍCH CHO BE: 
+// Khi viết API lấy danh sách thông báo, bạn cần JOIN/include các bảng lại với nhau.
+// Dữ liệu trả về cho FE sẽ là một mảng các object có cấu trúc như sau:
 
-interface Payment {
-  paymentId: string;
-  createdAt: string;
-  amount: number;
-  courseId: string;
-  studentId: string;
-  qrUrl: string;
-  status: string;
-  deleted: number;
-}
+// ─── 2. Mock Data đã gộp chuẩn DTO ─────────────────────────────────────────
 
-interface NotificationManagement {
-  notificationId: string;
-  senderId: string;
-  senderRole: string;
-  receiverId: string;
-  receiverRole: string;
-  deleted: number;
-  // Thêm trường phụ để hiển thị UI
-  message: string;
-  timeAgo: string;
-  avatarUrl: string;
-}
 
+// ─── 3. UI Component Helper Types ──────────────────────────────────────────
 interface PendingItem {
+  id: string;
   label: string;
   count: number;
   color: string;
   icon: React.ReactNode;
 }
 
-const mockPayments: Payment[] = [
-  { paymentId: "pay-001", createdAt: "2025-01-15", amount: 5500000, courseId: "crs-001", studentId: "acc-004", qrUrl: "", status: "completed", deleted: 0 },
-  { paymentId: "pay-002", createdAt: "2025-02-10", amount: 7200000, courseId: "crs-002", studentId: "acc-005", qrUrl: "", status: "completed", deleted: 0 },
-  { paymentId: "pay-003", createdAt: "2025-03-05", amount: 6800000, courseId: "crs-003", studentId: "acc-004", qrUrl: "", status: "completed", deleted: 0 },
-  { paymentId: "pay-004", createdAt: "2025-04-20", amount: 9100000, courseId: "crs-001", studentId: "acc-005", qrUrl: "", status: "completed", deleted: 0 },
-  { paymentId: "pay-005", createdAt: "2025-05-12", amount: 8300000, courseId: "crs-002", studentId: "acc-004", qrUrl: "", status: "completed", deleted: 0 },
-  { paymentId: "pay-006", createdAt: "2025-06-08", amount: 11500000, courseId: "crs-004", studentId: "acc-005", qrUrl: "", status: "completed", deleted: 0 },
-  { paymentId: "pay-007", createdAt: "2025-07-25", amount: 10200000, courseId: "crs-003", studentId: "acc-004", qrUrl: "", status: "completed", deleted: 0 },
-  { paymentId: "pay-008", createdAt: "2025-08-14", amount: 7900000, courseId: "crs-001", studentId: "acc-005", qrUrl: "", status: "pending", deleted: 0 },
-  { paymentId: "pay-009", createdAt: "2025-09-03", amount: 12400000, courseId: "crs-002", studentId: "acc-004", qrUrl: "", status: "completed", deleted: 0 },
-  { paymentId: "pay-010", createdAt: "2025-10-18", amount: 9800000, courseId: "crs-004", studentId: "acc-005", qrUrl: "", status: "completed", deleted: 0 },
-  { paymentId: "pay-011", createdAt: "2025-11-07", amount: 13600000, courseId: "crs-003", studentId: "acc-004", qrUrl: "", status: "completed", deleted: 0 },
-  { paymentId: "pay-012", createdAt: "2025-12-22", amount: 15200000, courseId: "crs-001", studentId: "acc-005", qrUrl: "", status: "completed", deleted: 0 },
-];
-
-const mockNotifications: NotificationManagement[] = [
-  {
-    notificationId: "ntf-001",
-    senderId: "acc-004",
-    senderRole: "student",
-    receiverId: "99fdb54e-27e2-11f1-a6e5-2e8453cbf53b",
-    receiverRole: "admin",
-    deleted: 0,
-    message: "Đã đăng ký khóa NodeJS",
-    timeAgo: "5 phút trước",
-    avatarUrl: "https://i.pravatar.cc/40?img=11",
-  },
-  {
-    notificationId: "ntf-002",
-    senderId: "5f17ed17-2eb4-11f1-89de-f68e7b428a1a",
-    senderRole: "teacher",
-    receiverId: "99fdb54e-27e2-11f1-a6e5-2e8453cbf53b",
-    receiverRole: "admin",
-    deleted: 0,
-    message: "Yêu cầu duyệt khóa python cơ bản",
-    timeAgo: "30 phút trước",
-    avatarUrl: "https://i.pravatar.cc/40?img=23",
-  },
-  {
-    notificationId: "ntf-003",
-    senderId: "acc-005",
-    senderRole: "student",
-    receiverId: "99fdb54e-27e2-11f1-a6e5-2e8453cbf53b",
-    receiverRole: "admin",
-    deleted: 0,
-    message: "Đã đăng ký khóa C++",
-    timeAgo: "5 giờ trước",
-    avatarUrl: "https://i.pravatar.cc/40?img=32",
-  },
-  {
-    notificationId: "ntf-004",
-    senderId: "640f4cc6-302b-11f1-bab7-eae648f6a63f",
-    senderRole: "student",
-    receiverId: "99fdb54e-27e2-11f1-a6e5-2e8453cbf53b",
-    receiverRole: "admin",
-    deleted: 0,
-    message: "Duyệt yêu cầu rút tiền của Thị Nguyệt",
-    timeAgo: "5 giờ trước",
-    avatarUrl: "https://i.pravatar.cc/40?img=45",
-  },
-  {
-    notificationId: "ntf-005",
-    senderId: "acc-004",
-    senderRole: "student",
-    receiverId: "99fdb54e-27e2-11f1-a6e5-2e8453cbf53b",
-    receiverRole: "admin",
-    deleted: 0,
-    message: "Đăng ký khóa C++",
-    timeAgo: "1 ngày trước",
-    avatarUrl: "https://i.pravatar.cc/40?img=57",
-  },
-];
-
-// ─── Tính doanh thu theo tháng từ bảng Payment ──────────────────────────────
-const monthlyRevenueData = Array.from({ length: 12 }, (_, i) => {
-  const month = i + 1;
-  const total = mockPayments
-    .filter((p) => {
-      const m = new Date(p.createdAt).getMonth() + 1;
-      return m === month && p.status === "completed" && p.deleted === 0;
-    })
-    .reduce((sum, p) => sum + p.amount, 0);
-  return {
-    month: `T${month}`,
-    revenue: total / 1_000_000, // đơn vị: triệu VND
-  };
-});
-
-// ─── Custom Tooltip ──────────────────────────────────────────────────────────
+// ─── Custom Tooltip & Icons ────────────────────────────────────────────────
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
@@ -145,86 +51,94 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-// ─── Icons (inline SVG) ──────────────────────────────────────────────────────
 const StudentIcon = () => (
-  <svg viewBox="0 0 40 40" className="w-10 h-10" fill="none">
-    <circle cx="20" cy="20" r="20" fill="#d1fae5" />
-    <circle cx="20" cy="15" r="6" fill="#34d399" />
-    <path d="M8 34c0-6.627 5.373-12 12-12s12 5.373 12 12" fill="#34d399" />
-  </svg>
+  <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+    <Users className="w-5 h-5 text-emerald-400" />
+  </div>
 );
 
 const TeacherIcon = () => (
-  <svg viewBox="0 0 40 40" className="w-10 h-10" fill="none">
-    <circle cx="20" cy="20" r="20" fill="#dbeafe" />
-    <circle cx="20" cy="15" r="6" fill="#60a5fa" />
-    <path d="M8 34c0-6.627 5.373-12 12-12s12 5.373 12 12" fill="#60a5fa" />
-  </svg>
+  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+    <GraduationCap className="w-5 h-5 text-blue-400" />
+  </div>
 );
 
 const CourseIcon = () => (
-  <svg viewBox="0 0 40 40" className="w-10 h-10" fill="none">
-    <circle cx="20" cy="20" r="20" fill="#fce7f3" />
-    <rect x="11" y="10" width="18" height="22" rx="3" fill="#f472b6" />
-    <path d="M15 16h10M15 20h10M15 24h7" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-    <path d="M25 25l3 3" stroke="#f472b6" strokeWidth="2" strokeLinecap="round" />
-    <circle cx="27" cy="27" r="3" fill="#f9a8d4" />
-    <path d="M26 27l1 1 2-2" stroke="white" strokeWidth="1" strokeLinecap="round" />
-  </svg>
+  <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center">
+    <BookOpen className="w-5 h-5 text-pink-400" />
+  </div>
 );
 
 const RevenueIcon = () => (
-  <svg viewBox="0 0 40 40" className="w-10 h-10" fill="none">
-    <circle cx="20" cy="20" r="20" fill="#fef3c7" />
-    <circle cx="20" cy="20" r="9" stroke="#f59e0b" strokeWidth="2" />
-    <text x="20" y="24" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#f59e0b">$</text>
-  </svg>
+  <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+    <CircleDollarSign className="w-5 h-5 text-amber-500" />
+  </div>
 );
 
 const BookIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none">
-    <rect x="3" y="3" width="18" height="18" rx="3" fill="#86efac" />
-    <path d="M7 8h10M7 12h10M7 16h6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
+  <div className="w-8 h-8 rounded-md bg-emerald-300 flex items-center justify-center">
+    <BookMarked className="w-5 h-5 text-white" />
+  </div>
 );
 
-const FormIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none">
-    <rect x="3" y="3" width="18" height="18" rx="3" fill="#a78bfa" />
-    <path d="M7 8h10M7 12h10M7 16h6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-    <circle cx="17" cy="16" r="2" fill="white" />
-  </svg>
-);
 
-// ─── Main Component ──────────────────────────────────────────────────────────
+// ─── Hàm Hỗ trợ Xử lý Thời gian ─────────────────────────────────────────────
+const formatTimeAgo = (dateString: string) => {
+  const date = new Date(dateString);
+  // Fake logic format thời gian (Bạn có thể dùng thư viện date-fns hoặc dayjs sau)
+  return `${date.getHours()} giờ trước`; 
+};
+
+// ─── Main Component ────────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const [activeBar, setActiveBar] = useState<string | null>(null);
+  const {setTabActive} = useTabAdminStore()
+  // Lấy dữ liệu từ Store
+  const { students, teachers, courses, payments, waitCourses,receivedNotifications } = useAdminStore();
 
-  const totalStudents = 165;
-  const totalTeachers = 24;
-  const totalCourses = 34;
-  const totalRevenue = mockPayments
-    .filter((p) => p.status === "completed" && p.deleted === 0)
+  // ─── Handlers ─────────────────────────────────────────────────────────────
+  const handlePendingItemClick = (id: string, label: string) => {
+    setTabActive('courses')
+  };
+
+  
+
+  const handleViewAllNotifications = () => {
+    setTabActive('notification')
+  };
+
+  // ─── Tính toán Dữ liệu Hiển thị ───────────────────────────────────────────
+  const totalRevenue = (payments ?? [])
+    .filter((p) => p.status == "SUCCESS")
     .reduce((s, p) => s + p.amount, 0);
   const totalRevenueTr = (totalRevenue / 1_000_000).toFixed(0);
 
+  const monthlyRevenueData = useMemo(() => {
+    return Array.from({ length: 12 }, (_, i) => {
+      const month = i + 1;
+      const total = (payments ?? [])
+        .filter((p) => p.periodMonth === month && p.status == "SUCCESS")
+        .reduce((sum, p) => sum + p.amount, 0);
+      return {
+        month: `T${month}`,
+        revenue: total / 1_000_000,
+      };
+    });
+  }, [payments]);
+
   const pendingItems: PendingItem[] = [
     {
+      id: "pending-courses",
       label: "Yêu cầu duyệt khóa học",
-      count: 5,
+      count: waitCourses?.length ?? 0,
       color: "from-green-100 to-green-200",
       icon: <BookIcon />,
     },
-    {
-      label: "Đơn đăng kí ứng tuyển giáo viên",
-      count: 2,
-      color: "from-purple-100 to-purple-200",
-      icon: <FormIcon />,
-    },
+    
   ];
 
   return (
-    <div className=" p-6 font-sans">
+    <div className="p-6 font-sans">
       {/* ── Greeting ── */}
       <h1 className="text-2xl font-bold text-gray-700 mb-5">
         Xin chào <span className="text-pink-500">Admin</span>!
@@ -233,9 +147,9 @@ export default function AdminDashboard() {
       {/* ── Stat Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
-          { label: "Tổng học viên", value: totalStudents, icon: <StudentIcon />, accent: "text-green-600" },
-          { label: "Tổng giáo viên", value: totalTeachers, icon: <TeacherIcon />, accent: "text-blue-500" },
-          { label: "Tổng khóa học", value: totalCourses, icon: <CourseIcon />, accent: "text-pink-500" },
+          { label: "Tổng học viên", value: students?.length, icon: <StudentIcon />, accent: "text-green-600" },
+          { label: "Tổng giáo viên", value: teachers?.length, icon: <TeacherIcon />, accent: "text-blue-500" },
+          { label: "Tổng khóa học", value: courses?.length, icon: <CourseIcon />, accent: "text-pink-500" },
           { label: "Tổng doanh số", value: `${totalRevenueTr}tr VND`, icon: <RevenueIcon />, accent: "text-amber-500" },
         ].map((card, i) => (
           <div
@@ -259,9 +173,10 @@ export default function AdminDashboard() {
           <div className="bg-pink-100/70 backdrop-blur rounded-2xl p-5 border border-pink-200/60">
             <h2 className="text-base font-semibold text-gray-600 mb-4">Chờ phê duyệt</h2>
             <div className="flex flex-col gap-3">
-              {pendingItems.map((item, i) => (
+              {pendingItems.map((item) => (
                 <div
-                  key={i}
+                  key={item.id}
+                  onClick={() => handlePendingItemClick(item.id, item.label)}
                   className={`bg-gradient-to-r ${item.color} rounded-xl px-4 py-3 flex items-center justify-between cursor-pointer hover:opacity-90 transition`}
                 >
                   <div className="flex items-center gap-3">
@@ -281,7 +196,7 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-semibold text-gray-600">Doanh thu tháng</h2>
               <span className="text-xs bg-pink-100 text-pink-600 font-semibold px-3 py-1 rounded-full">
-                Năm 2025
+                Năm 2026
               </span>
             </div>
 
@@ -352,28 +267,29 @@ export default function AdminDashboard() {
         <div className="bg-white/80 backdrop-blur rounded-2xl p-5 border border-white shadow-sm">
           <h2 className="text-base font-semibold text-gray-600 mb-4">Thông báo gần đây:</h2>
           <div className="flex flex-col gap-3">
-            {mockNotifications
-              .filter((n) => n.deleted === 0)
-              .map((ntf) => (
-                <div
-                  key={ntf.notificationId}
-                  className="bg-gray-50 hover:bg-pink-50 rounded-xl px-3 py-3 flex items-start gap-3 cursor-pointer transition-colors"
-                >
-                  <img
-                    src={ntf.avatarUrl}
-                    alt="avatar"
-                    className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-pink-100"
-                  />
-                  <div className="min-w-0">
-                    <p className="text-sm text-gray-700 leading-snug">{ntf.message}</p>
-                    <p className="text-xs text-gray-400 mt-1">{ntf.timeAgo}</p>
-                  </div>
+            {receivedNotifications?.map((ntf) => (
+              <div
+                key={ntf.id}
+                className="bg-gray-50 hover:bg-pink-50 rounded-xl px-3 py-3 flex items-start gap-3 cursor-pointer transition-colors"
+              >
+                <img
+                  src={ntf.senderAvatarUrl}
+                  alt="avatar"
+                  className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-pink-100"
+                />
+                <div className="min-w-0">
+                  <p className="text-sm text-gray-700 leading-snug">{ntf.message}</p>
+                  <p className="text-xs text-gray-400 mt-1">{formatTimeAgo(ntf.createdAt)}</p>
                 </div>
-              ))}
+              </div>
+            ))}
           </div>
 
           {/* View all button */}
-          <button className="mt-4 w-full text-center text-xs text-pink-500 font-semibold py-2 rounded-xl border border-pink-200 hover:bg-pink-50 transition">
+          <button 
+            onClick={handleViewAllNotifications}
+            className="mt-4 w-full text-center text-xs text-pink-500 font-semibold py-2 rounded-xl border border-pink-200 hover:bg-pink-50 transition"
+          >
             Xem tất cả thông báo →
           </button>
         </div>
