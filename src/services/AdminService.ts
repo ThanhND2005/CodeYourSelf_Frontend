@@ -43,8 +43,14 @@ export const AdminServices ={
     acceptWaitCourse : async (courseId: string) =>{
         await api.patch(`/admin/acceptWaitCourse/${courseId}`,{},{withCredentials:true})
     },
+    acceptWaitMultipleCourse : async (courseId: string) =>{
+        await api.patch(`/admin/acceptWaitMultipleCourse/${courseId}`,{},{withCredentials:true})
+    },
     denyWaitCourse : async (courseId: string) =>{
         await api.delete(`/admin/denyWaitCourse/${courseId}`,{withCredentials: true})
+    },
+    denyWaitMultipleCourse : async (courseId: string) =>{
+        await api.delete(`/admin/denyWaitMultipleCourse/${courseId}`,{withCredentials: true})
     },
     postStudentBill : async (courseId: string, studentId: string, amount: number) =>{
         await api.post(`/admin/postStudentBill`,{courseId,studentId,amount},{withCredentials: true})
@@ -59,5 +65,12 @@ export const AdminServices ={
     },
     postNotification : async (role: string, title: string, content: string) =>{
         await api.post(`/admin/postNotification`,{role,title,content},{withCredentials: true})
+    },
+    patchTeacher : async (teacherId : string, name: string, dob: Date,address: string, phone: string, gender:string)=>{
+        await api.patch(`/admin/patchTeacher/${teacherId}`,{name, dob,address,phone, gender},{withCredentials: true})
+    },
+    getWaitMultipleCourses : async () => {
+        const res = await api.get(`/admin/getWaitMultipleCourses`,{withCredentials: true})
+        return res.data
     }
 }

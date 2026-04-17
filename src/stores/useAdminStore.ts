@@ -12,6 +12,8 @@ export const useAdminStore = create<adminState>((set,get)=>({
     waitCourses :null,
     receivedNotifications : null,
     notifications: null,
+    waitMultipleCourses : null,
+    setWaitMultipleCourse: (waitMultipleCourses : WaitCourse[]) => set({waitMultipleCourses}),
     setNotifications: (notifications : Notification[]) => set({notifications}),
     setReceivedNotificatons : (receivedNotifications : DashboardNotificationDTO[]) => set({receivedNotifications}),
     setWaitCourses : (waitCourses: WaitCourse[]) => set({waitCourses}),
