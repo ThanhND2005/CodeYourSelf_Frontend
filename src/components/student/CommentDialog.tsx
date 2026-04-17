@@ -1,34 +1,58 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
-export default function CommentDialog({ open, onClose }: any) {
+export default function CommentDialog(
+    { open, onClose }: { open: boolean; onClose: () => void }
+  ) {
   const [message, setMessage] = useState("");
 
   const [comments, setComments] = useState([
     {
-      commentId: 1,
-      userName: "Nguyễn Linh",
-      content: "K bt mấy bài về sau thế nào chứ bài đầu tiên đã thấy hay phết r",
-      createAt: "26/12/2025"
-    }
+      commentId: "cmt-001",
+      content: "Bài đầu dễ hiểu thật",
+      createdAt: "2026-04-17 10:30",
+      user: {
+        userId: "acc-008",
+        username: "Nguyễn Linh",
+      },
+    },
+    {
+      commentId: "cmt-002",
+      content: "Đúng rồi, giảng dễ hiểu 😆",
+      createdAt: "2026-04-17 10:32",
+      user: {
+        userId: "acc-002",
+        username: "Thầy Đạt",
+      },
+    },
   ]);
+
+  const currentUserId = "acc-008"; // giả lập user đang login
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  
 
   if (!open) return null;
 
   const handleSend = () => {
     if (!message.trim()) return;
 
-    setComments([
-      ...comments,
-      {
-        commentId: Date.now(),
-        userName: "Bạn",
-        content: message,
-        createAt: "2025-12-26T10:30:00"
-      }
-    ]);
+    const newComment = {
+      commentId: "cmt-" + Date.now(),
+      content: message,
+      createdAt: new Date().toLocaleString(),
+      user: {
+        userId: currentUserId,
+        username: "Bạn",
+      },
+    };
 
+    setComments((prev) => [...prev, newComment]);
     setMessage("");
   };
+
+  // auto scroll xuống cuối
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [comments]);
 
   return (
     <div
@@ -36,64 +60,78 @@ export default function CommentDialog({ open, onClose }: any) {
       onClick={onClose}
     >
       <div
-        className="bg-white w-[650px] h-[520px] rounded-2xl p-5 flex flex-col border border-[#851385]"
+        className="bg-white w-[650px] h-[520px] rounded-2xl flex flex-col border border-[#851385] shadow-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* HEADER */}
-        <div className="text-lg font-semibold text-[#851385] mb-4">
-          Bình luận
+        <div className="px-5 py-4 border-b font-semibold text-[#851385] flex justify-between items-center">
+          <span>Chat khóa học</span>
+
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-black text-lg"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* MESSAGE LIST */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50">
+          {comments.map((cmt) => {
+            const isMe = cmt.user.userId === currentUserId;
+
+            return (
+              <div
+                key={cmt.commentId}
+                className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+              >
+                <div className="max-w-[70%]">
+                  {!isMe && (
+                    <div className="text-xs text-gray-500 mb-1">
+                      {cmt.user.username}
+                    </div>
+                  )}
+
+                  <div
+                    className={`px-4 py-2 rounded-2xl text-sm break-words
+                      ${
+                        isMe
+                          ? "bg-[#851385] text-white rounded-br-none"
+                          : "bg-white text-gray-800 border rounded-bl-none"
+                      }
+                    `}
+                  >
+                    {cmt.content}
+                  </div>
+
+                  <div className="text-[10px] text-gray-400 mt-1 text-right">
+                    {cmt.createdAt}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          <div ref={bottomRef} />
         </div>
 
         {/* INPUT */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-gray-300"></div>
-
+        <div className="p-3 border-t flex items-center gap-2 bg-white">
           <input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Nhập bình luận..."
-            className="flex-1 bg-gray-100 px-4 py-2 rounded-full outline-none"
+            placeholder="Nhập tin nhắn..."
+            className="flex-1 bg-gray-100 px-4 py-2 rounded-full outline-none focus:ring-2 focus:ring-[#851385]"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSend();
+            }}
           />
 
           <button
             onClick={handleSend}
-            className="px-4 py-2 rounded-full text-white bg-[#851385]"
+            className="px-4 py-2 rounded-full text-white bg-[#851385] hover:bg-[#6a0f6a] transition"
           >
             Gửi
-          </button>
-        </div>
-
-        {/* COMMENT LIST */}
-        <div className="flex-1 overflow-y-auto space-y-4">
-          {comments.map((cmt) => (
-            <div key={cmt.commentId} className="flex gap-3">
-              <div className="w-10 h-10 rounded-full bg-gray-300"></div>
-
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{cmt.userName}</span>
-                  <span className="text-sm text-gray-400">
-                    {cmt.createAt}
-                  </span>
-                </div>
-
-                <div className="text-sm mt-1">{cmt.content}</div>
-
-                <div className="text-sm text-[#851385] mt-1 cursor-pointer">
-                  Phản hồi
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* FOOTER */}
-        <div className="flex justify-end mt-4">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-gray-200"
-          >
-            Đóng
           </button>
         </div>
       </div>
