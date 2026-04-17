@@ -1,321 +1,152 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Check, X, Eye, PlayCircle, Layers, FileVideo, Image as ImageIcon, Video as VideoIcon } from "lucide-react";
+import { useAdminStore } from "@/stores/useAdminStore";
+import { TeacherService } from "@/services/TeacherService";
+import { AdminServices } from "@/services/AdminService";
 
-// ─── Types (khớp với schema database) ───────────────────────────────────────
+// ─── Interfaces (Dựa trên ảnh và yêu cầu) ───────────────────────────────────
 
-interface CourseVideo {
-  videoUrl: string;
-  name: string;
-  deleted: number;
-}
-
-interface Course {
+export interface WaitCourse {
   courseId: string;
   name: string;
-  cost: number | null;       // null = Miễn Phí
+  cost: string;
   summary: string;
-  deleted: number;
   teacherId: string;
-  teacherName: string;       // join từ Teacher table
-  teacherAvatar?: string;
-  rate: number;
-  multipleCourseId: string | null;
-  status: "pending" | "approved" | "rejected";
+  teacherName: string;
   imageUrl: string;
-  totalVideos: number;       // tính từ CourseVideo
-  totalDurationMinutes: number;
-  submittedAt: string;       // ISO string
-  videos: CourseVideo[];
 }
 
-// ─── Mock Data ───────────────────────────────────────────────────────────────
-
-const MOCK_COURSES: Course[] = [
-  {
-    courseId: "c-101",
-    name: "C++ basic",
-    cost: null,
-    summary: "Khóa học lập trình C++ cơ bản dành cho người mới bắt đầu.",
-    deleted: 0,
-    teacherId: "t-001",
-    teacherName: "Đào Vũ Đạt",
-    teacherAvatar: "",
-    rate: 0,
-    multipleCourseId: null,
-    status: "pending",
-    imageUrl: "",
-    totalVideos: 15,
-    totalDurationMinutes: 5 * 60 + 24,
-    submittedAt: "2026-02-28T09:00:00Z",
-    videos: [
-      { videoUrl: "https://www.youtube.com/watch?v=cpp1", name: "Sơ lược về C++, cài đặt môi trường", deleted: 0 },
-      { videoUrl: "https://www.youtube.com/watch?v=cpp2", name: "Các kiểu dữ liệu, biến, comments, built-in", deleted: 0 },
-      { videoUrl: "https://www.youtube.com/watch?v=cpp3", name: "Vòng lặp", deleted: 0 },
-      { videoUrl: "https://www.youtube.com/watch?v=cpp4", name: "Mảng, xâu kí tự", deleted: 0 },
-    ],
-  },
-  {
-    courseId: "c-102",
-    name: "React Pro",
-    cost: 1990000,
-    summary: "Khóa học React nâng cao, bao gồm Hooks, Context API và tối ưu hiệu năng.",
-    deleted: 0,
-    teacherId: "t-002",
-    teacherName: "Lê Thanh Thủy",
-    teacherAvatar: "",
-    rate: 0,
-    multipleCourseId: null,
-    status: "pending",
-    imageUrl: "",
-    totalVideos: 30,
-    totalDurationMinutes: 7 * 60 + 44,
-    submittedAt: "2026-02-28T07:00:00Z",
-    videos: [
-      { videoUrl: "https://www.youtube.com/watch?v=React1", name: "Hooks là gì?", deleted: 0 },
-      { videoUrl: "http://localhost:9000/images/video2.mp4", name: "Images là gì?", deleted: 0 },
-      { videoUrl: "https://www.youtube.com/watch?v=React3", name: "Context API", deleted: 0 },
-    ],
-  },
-  {
-    courseId: "c-103",
-    name: "SQL & Database Design",
-    cost: 850000,
-    summary: "Thiết kế cơ sở dữ liệu quan hệ, viết truy vấn SQL hiệu quả từ cơ bản đến nâng cao.",
-    deleted: 0,
-    teacherId: "t-003",
-    teacherName: "Nguyễn Minh Khoa",
-    teacherAvatar: "",
-    rate: 0,
-    multipleCourseId: "mc-001",
-    status: "pending",
-    imageUrl: "",
-    totalVideos: 22,
-    totalDurationMinutes: 6 * 60 + 10,
-    submittedAt: "2026-02-27T14:30:00Z",
-    videos: [
-      { videoUrl: "https://www.youtube.com/watch?v=SQL1", name: "Normalization", deleted: 0 },
-      { videoUrl: "https://www.youtube.com/watch?v=SQL2", name: "JOIN & Subquery", deleted: 0 },
-    ],
-  },
-];
-
-// ─── API Functions (placeholder – thay bằng fetch thực tế) ──────────────────
-
-async function fetchPendingCourses(): Promise<Course[]> {
-  // TODO: GET /api/admin/courses?status=pending
-  return Promise.resolve(MOCK_COURSES);
+export interface Video {
+  courseId: string;
+  name: string;
+  videoId: string;
+  videoUrl: string;
 }
 
-async function approveCourse(courseId: string): Promise<void> {
-  // TODO: PATCH /api/admin/courses/:courseId  { status: "approved" }
-  console.log("Approve course:", courseId);
+
+async function fetchCourseVideosApi(courseId: string): Promise<Video[]> {
+  const {videos} = await TeacherService.getVideo(courseId)
+  return Promise.resolve(videos);
 }
 
-async function rejectCourse(courseId: string, reason?: string): Promise<void> {
-  // TODO: PATCH /api/admin/courses/:courseId  { status: "rejected", reason }
-  console.log("Reject course:", courseId, reason);
+async function fetchSubCoursesApi(course : WaitCourse): Promise<WaitCourse[]> {
+  const {singleCourses} = await TeacherService.getSingleCourses(course.teacherId )
+  return Promise.resolve(singleCourses.filter((t) => t.multipleCourseId === course.courseId));
 }
 
-async function fetchCourseDetail(courseId: string): Promise<Course | null> {
-  // TODO: GET /api/admin/courses/:courseId
-  console.log("Fetch detail:", courseId);
-  return Promise.resolve(MOCK_COURSES.find((c) => c.courseId === courseId) ?? null);
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function formatDuration(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return `${h} giờ ${m} phút`;
-}
-
-function formatCost(cost: number | null): string {
-  if (cost === null || cost === 0) return "Miễn Phí";
-  return cost.toLocaleString("vi-VN") + " (vnđ)";
-}
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getHours()}Am, ${String(d.getDate()).padStart(2, "0")}-${String(
-    d.getMonth() + 1
-  ).padStart(2, "0")}-${d.getFullYear()}`;
-}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-interface AvatarProps {
-  name: string;
-  size?: "sm" | "md";
-}
+// Dialog xem chi tiết Khóa Đơn (Single Course)
+function SingleCourseDialog({ course, onClose }: { course: WaitCourse; onClose: () => void }) {
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [activeVideo, setActiveVideo] = useState<Video | null>(null);
 
-function Avatar({ name, size = "md" }: AvatarProps) {
-  const initials = name
-    .split(" ")
-    .slice(-2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
-  const sizeClass = size === "sm" ? "w-9 h-9 text-xs" : "w-12 h-12 text-sm";
-  const colors = [
-    "bg-violet-400",
-    "bg-pink-400",
-    "bg-sky-400",
-    "bg-emerald-400",
-    "bg-amber-400",
-  ];
-  const color = colors[name.charCodeAt(0) % colors.length];
+  useEffect(() => {
+    fetchCourseVideosApi(course.courseId).then(setVideos);
+  }, [course]);
+
+  // Xử lý link youtube thành link embed để xem trong iframe
+  const getEmbedUrl = (url: string) => {
+    if (url.includes("youtube.com/watch?v=")) {
+      return url.replace("watch?v=", "embed/").split("&")[0];
+    }
+    return url;
+  };
+
   return (
-    <div
-      className={`${sizeClass} ${color} rounded-full flex items-center justify-center font-semibold text-white flex-shrink-0`}
-    >
-      {initials}
-    </div>
-  );
-}
-
-// Detail modal
-interface DetailModalProps {
-  course: Course;
-  onClose: () => void;
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
-}
-
-function DetailModal({ course, onClose, onApprove, onReject }: DetailModalProps) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="bg-gradient-to-r from-violet-500 to-pink-500 px-6 py-4 flex items-center justify-between">
-          <div>
-            <p className="text-white/70 text-xs font-medium uppercase tracking-widest">Chi tiết khóa học</p>
-            <h2 className="text-white text-lg font-bold mt-0.5">{course.name}</h2>
-          </div>
-          <button onClick={onClose} className="text-white/80 hover:text-white text-2xl leading-none">
-            ×
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-sky-600 px-6 py-4 flex items-center justify-between">
+          <h2 className="text-white text-lg font-bold flex items-center gap-2">
+            <FileVideo className="w-5 h-5" /> Chi tiết khóa học đơn: {course.name}
+          </h2>
+          <button onClick={onClose} className="text-white/80 hover:text-white transition"><X /></button>
         </div>
 
-        {/* Info */}
-        <div className="px-6 py-4 border-b border-gray-100">
-          <div className="flex items-center gap-3 mb-3">
-            <Avatar name={course.teacherName} size="sm" />
-            <div>
-              <p className="text-sm font-semibold text-gray-800">{course.teacherName}</p>
-              <p className="text-xs text-gray-400">{course.teacherId}</p>
+        <div className="p-6 overflow-y-auto flex-1">
+          <p className="text-sm text-gray-600 mb-4">{course.summary}</p>
+          
+          {/* Trình phát Video */}
+          {activeVideo && (
+            <div className="mb-6 bg-black rounded-xl overflow-hidden aspect-video">
+              {activeVideo.videoUrl.includes("youtube.com") ? (
+                <iframe
+                  className="w-full h-full"
+                  src={activeVideo.videoUrl}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              ) : (
+                <video className="w-full h-full" controls autoPlay src={activeVideo.videoUrl} />
+              )}
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
-            <span>💰 {formatCost(course.cost)}</span>
-            <span>📹 {course.totalVideos} video</span>
-            <span>⏱ {formatDuration(course.totalDurationMinutes)}</span>
-            <span>📅 {formatDate(course.submittedAt)}</span>
-          </div>
-          {course.summary && (
-            <p className="mt-3 text-xs text-gray-500 leading-relaxed">{course.summary}</p>
           )}
-        </div>
 
-        {/* Video list */}
-        <div className="px-6 py-4 max-h-56 overflow-y-auto space-y-2">
-          {course.videos.map((v, i) => (
-            <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl px-3 py-2">
-              <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-red-500">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
+          <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <VideoIcon className="w-4 h-4 text-sky-500" /> Danh sách Video ({videos.length})
+          </h3>
+          <div className="space-y-2">
+            {videos.length === 0 && <p className="text-sm text-gray-500">Không có video nào.</p>}
+            {videos.map((v) => (
+              <div
+                key={v.videoId}
+                onClick={() => setActiveVideo(v)}
+                className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors border ${
+                  activeVideo?.videoId === v.videoId ? "bg-sky-50 border-sky-200" : "bg-gray-50 hover:bg-gray-100 border-transparent"
+                }`}
+              >
+                <PlayCircle className={`w-8 h-8 ${activeVideo?.videoId === v.videoId ? "text-sky-500" : "text-gray-400"}`} />
+                <div>
+                  <p className="text-sm font-medium text-gray-800">{v.name}</p>
+                  <p className="text-xs text-gray-500">ID: {v.videoId}</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-gray-700 truncate">Video {i + 1}: {v.name}</p>
-                <p className="text-[10px] text-gray-400 truncate">{v.videoUrl}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Actions */}
-        <div className="px-6 py-4 flex gap-3 border-t border-gray-100">
-          <button
-            onClick={() => { onApprove(course.courseId); onClose(); }}
-            className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
-          >
-            ✓ Duyệt
-          </button>
-          <button
-            onClick={() => { onReject(course.courseId); onClose(); }}
-            className="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
-          >
-            ✗ Từ chối
-          </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// Course card
-interface CourseCardProps {
-  course: Course;
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
-  onDetail: (course: Course) => void;
-}
+// Dialog xem chi tiết Khóa Multiple (Combo Course)
+function MultipleCourseDialog({ course, onClose }: { course: WaitCourse; onClose: () => void }) {
+  const [subCourses, setSubCourses] = useState<WaitCourse[]>([]);
 
-function CourseCard({ course, onApprove, onReject, onDetail }: CourseCardProps) {
+  useEffect(() => {
+    fetchSubCoursesApi(course).then(setSubCourses);
+  }, [course]);
+
   return (
-    <div className="bg-white rounded-2xl border border-pink-100 shadow-sm hover:shadow-md transition-shadow p-5 flex gap-4">
-      <Avatar name={course.teacherName} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-violet-600 px-6 py-4 flex items-center justify-between">
+          <h2 className="text-white text-lg font-bold flex items-center gap-2">
+            <Layers className="w-5 h-5" /> Chi tiết Combo: {course.name}
+          </h2>
+          <button onClick={onClose} className="text-white/80 hover:text-white transition"><X /></button>
+        </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="text-sm text-gray-500">
-              Giáo viên: <span className="font-semibold text-gray-800">{course.teacherName}</span>
-            </p>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Khóa học: <span className="font-semibold text-violet-600">{course.name}</span>
-            </p>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Phí: <span className="font-medium text-gray-700">{formatCost(course.cost)}</span>
-            </p>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Thời lượng:{" "}
-              <span className="font-medium text-gray-700">
-                {course.totalVideos} video ({formatDuration(course.totalDurationMinutes)})
-              </span>
-            </p>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Thời gian gửi yêu cầu:{" "}
-              <span className="font-medium text-gray-700">{formatDate(course.submittedAt)}</span>
-            </p>
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex flex-col gap-2 flex-shrink-0">
-            <button
-              onClick={() => onApprove(course.courseId)}
-              className="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white text-xs font-semibold px-4 py-1.5 rounded-lg transition-all"
-            >
-              Duyệt
-            </button>
-            <button
-              onClick={() => onDetail(course)}
-              className="bg-sky-500 hover:bg-sky-600 active:scale-95 text-white text-xs font-semibold px-4 py-1.5 rounded-lg transition-all"
-            >
-              Chi tiết
-            </button>
-            <button
-              onClick={() => onReject(course.courseId)}
-              className="bg-red-500 hover:bg-red-600 active:scale-95 text-white text-xs font-semibold px-4 py-1.5 rounded-lg transition-all"
-            >
-              Từ chối
-            </button>
+        <div className="p-6 overflow-y-auto flex-1">
+          <p className="text-sm text-gray-600 mb-6">{course.summary}</p>
+          
+          <h3 className="font-semibold text-gray-800 mb-3">Các khóa học bao gồm ({subCourses.length})</h3>
+          <div className="space-y-3">
+            {subCourses.length === 0 && <p className="text-sm text-gray-500">Không có khóa học nào bên trong.</p>}
+            {subCourses.map((c) => (
+              <div key={c.courseId} className="flex gap-4 p-4 border border-gray-100 rounded-xl bg-gray-50">
+                {c.imageUrl ? (
+                  <img src={c.imageUrl} alt={c.name} className="w-20 h-14 object-cover rounded-md border" />
+                ) : (
+                  <div className="w-20 h-14 bg-gray-200 rounded-md flex items-center justify-center"><ImageIcon className="text-gray-400" /></div>
+                )}
+                <div>
+                  <p className="font-semibold text-sm text-gray-800">{c.name}</p>
+                  <p className="text-xs text-violet-600 font-medium mt-1">{c.cost}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -323,122 +154,161 @@ function CourseCard({ course, onApprove, onReject, onDetail }: CourseCardProps) 
   );
 }
 
-// ─── Toast notification ───────────────────────────────────────────────────────
+// Course Card dùng chung cho cả Single và Multiple
+function CourseCard({ course, onApprove, onReject, onDetail, isMultiple }: { 
+  course: WaitCourse; 
+  onApprove: (id: string) => void; 
+  onReject: (id: string) => void; 
+  onDetail: (course: WaitCourse) => void;
+  isMultiple?: boolean;
+}) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4 hover:shadow-md transition">
+      {/* Thumbnail */}
+      <div className="w-28 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center">
+        {course.imageUrl ? (
+          <img src={course.imageUrl} alt={course.name} className="w-full h-full object-cover" />
+        ) : (
+          <ImageIcon className="text-gray-300 w-8 h-8" />
+        )}
+      </div>
 
-interface Toast {
-  id: number;
-  message: string;
-  type: "success" | "error";
+      {/* Info */}
+      <div className="flex-1 min-w-0 flex flex-col justify-between">
+        <div>
+          <h3 className={`font-semibold truncate ${isMultiple ? "text-violet-700" : "text-sky-700"}`}>
+            {course.name}
+          </h3>
+          <p className="text-xs text-gray-500 mt-1 line-clamp-1">{course.summary}</p>
+          <div className="flex items-center gap-4 mt-2 text-xs text-gray-600">
+            <span>👨‍🏫 {course.teacherName}</span>
+            <span className="font-medium text-red-500">💰 {course.cost}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex flex-col gap-2 flex-shrink-0 justify-center">
+        <button onClick={() => onApprove(course.courseId)} className="flex items-center justify-center gap-1 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-medium transition border border-emerald-200 hover:border-emerald-500">
+          <Check className="w-3.5 h-3.5" /> Duyệt
+        </button>
+        <button onClick={() => onDetail(course)} className="flex items-center justify-center gap-1 bg-gray-50 text-gray-600 hover:bg-gray-800 hover:text-white px-3 py-1.5 rounded-lg text-xs font-medium transition border border-gray-200 hover:border-gray-800">
+          <Eye className="w-3.5 h-3.5" /> Chi tiết
+        </button>
+        <button onClick={() => onReject(course.courseId)} className="flex items-center justify-center gap-1 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-medium transition border border-red-200 hover:border-red-500">
+          <X className="w-3.5 h-3.5" /> Từ chối
+        </button>
+      </div>
+    </div>
+  );
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function CourseApprovalPage() {
-  const [courses, setCourses] = useState<Course[]>(MOCK_COURSES);
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const [loading, setLoading] = useState(false);
+  const {waitCourses,waitMultipleCourses,setWaitCourses,setWaitMultipleCourse} = useAdminStore()
+  
+  const [selectedSingle, setSelectedSingle] = useState<WaitCourse | null>(null);
+  const [selectedMultiple, setSelectedMultiple] = useState<WaitCourse | null>(null);
 
-  function addToast(message: string, type: "success" | "error") {
-    const id = Date.now();
-    setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3000);
-  }
-
-  async function handleApprove(courseId: string) {
+  // Xử lý API cho khóa đơn
+  const handleApproveSingle = async (id: string) => {
     try {
-      setLoading(true);
-      await approveCourse(courseId);
-      setCourses((prev) => prev.filter((c) => c.courseId !== courseId));
-      addToast("Đã duyệt khóa học thành công!", "success");
-    } catch {
-      addToast("Có lỗi xảy ra, vui lòng thử lại.", "error");
-    } finally {
-      setLoading(false);
+      await AdminServices.acceptWaitCourse(id)
+      const {waitCourses : waitCourses1} = await AdminServices.getWaitCourses()
+      setWaitCourses(waitCourses1)
+    } catch (error) {
+      console.error(error)
     }
-  }
-
-  async function handleReject(courseId: string) {
+  };
+  const handleRejectSingle = async (id: string) => {
     try {
-      setLoading(true);
-      await rejectCourse(courseId);
-      setCourses((prev) => prev.filter((c) => c.courseId !== courseId));
-      addToast("Đã từ chối khóa học.", "success");
-    } catch {
-      addToast("Có lỗi xảy ra, vui lòng thử lại.", "error");
-    } finally {
-      setLoading(false);
+      await AdminServices.denyWaitCourse(id)
+      const {waitCourses : waitCourses1} = await AdminServices.getWaitCourses()
+      setWaitCourses(waitCourses1)
+    } catch (error) {
+      console.error(error)
     }
-  }
+  };
 
-  // Gọi khi mount thực tế:
-  // useEffect(() => {
-  //   fetchPendingCourses().then(setCourses);
-  // }, []);
+  // Xử lý API cho khóa combo
+  const handleApproveMultiple = async (id: string) => {
+    try {
+      await AdminServices.acceptWaitMultipleCourse(id)
+      const {waitMultipleCourses : waitMultipleCourses1} = await AdminServices.getWaitCourses()
+      setWaitMultipleCourse(waitMultipleCourses1)
+    } catch (error) {
+      console.error(error)
+    }
+  };
+  const handleRejectMultiple = async (id: string) => {
+   try {
+      await AdminServices.denyWaitMultipleCourse(id)
+      const {waitMultipleCourses : waitMultipleCourses1} = await AdminServices.getWaitMultipleCourses()
+      setWaitMultipleCourse(waitMultipleCourses1)
+    } catch (error) {
+      console.error(error)
+    }
+  };
 
   return (
-    <div className=" p-6">
-      {/* Toast */}
-      <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            className={`px-4 py-3 rounded-xl text-white text-sm font-medium shadow-lg transition-all
-              ${t.type === "success" ? "bg-emerald-500" : "bg-red-500"}`}
-          >
-            {t.message}
-          </div>
-        ))}
+    <div className="p-6  h-screen flex flex-col gap-6 ">
+      <h1 className="text-2xl font-bold text-gray-800 flex-shrink-0">Quản lý xét duyệt khóa học</h1>
+
+      {/* Vùng 1: Khóa học đơn */}
+      <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-sky-50 px-6 py-3 border-b border-sky-100 flex items-center gap-2">
+          <FileVideo className="text-sky-600 w-5 h-5" />
+          <h2 className="font-semibold text-sky-800">Khóa học đơn chờ duyệt ({waitCourses?.length})</h2>
+        </div>
+        <div className="p-4 overflow-y-auto max-h-[40vh] space-y-3">
+          {waitCourses?.length === 0 ? (
+            <p className="text-center text-gray-400 py-10 text-sm">Không có khóa học đơn nào cần duyệt.</p>
+          ) : (
+            waitCourses?.map((course) => (
+              <CourseCard
+                key={course.courseId}
+                course={course}
+                onApprove={handleApproveSingle}
+                onReject={handleRejectSingle}
+                onDetail={setSelectedSingle}
+              />
+            ))
+          )}
+        </div>
       </div>
 
-      {/* Detail modal */}
-      {selectedCourse && (
-        <DetailModal
-          course={selectedCourse}
-          onClose={() => setSelectedCourse(null)}
-          onApprove={handleApprove}
-          onReject={handleReject}
-        />
+      {/* Vùng 2: Khóa học Multiple (Combo) */}
+      <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-violet-50 px-6 py-3 border-b border-violet-100 flex items-center gap-2">
+          <Layers className="text-violet-600 w-5 h-5" />
+          <h2 className="font-semibold text-violet-800">Khóa học Combo (Multiple) chờ duyệt ({waitMultipleCourses?.length})</h2>
+        </div>
+        <div className="p-4 overflow-y-auto max-h-[40vh] space-y-3">
+          {waitMultipleCourses?.length === 0 ? (
+            <p className="text-center text-gray-400 py-10 text-sm">Không có khóa combo nào cần duyệt.</p>
+          ) : (
+            waitMultipleCourses?.map((course) => (
+              <CourseCard
+                key={course.courseId}
+                course={course}
+                isMultiple={true}
+                onApprove={handleApproveMultiple}
+                onReject={handleRejectMultiple}
+                onDetail={setSelectedMultiple}
+              />
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Modals */}
+      {selectedSingle && (
+        <SingleCourseDialog course={selectedSingle} onClose={() => setSelectedSingle(null)} />
       )}
-
-      {/* Page content */}
-      <div className="mx-auto">
-        {/* Page header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Yêu cầu duyệt khóa học</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {courses.length} khóa học đang chờ phê duyệt
-          </p>
-        </div>
-
-        {/* Loading overlay */}
-        {loading && (
-          <div className="flex justify-center py-4">
-            <div className="w-6 h-6 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
-
-        {/* Empty state */}
-        {!loading && courses.length === 0 && (
-          <div className="text-center py-20 text-gray-400">
-            <div className="text-5xl mb-3">🎉</div>
-            <p className="font-medium">Không còn khóa học nào chờ duyệt!</p>
-          </div>
-        )}
-
-        {/* Course list */}
-        <div className="space-y-4">
-          {courses.map((course) => (
-            <CourseCard
-              key={course.courseId}
-              course={course}
-              onApprove={handleApprove}
-              onReject={handleReject}
-              onDetail={setSelectedCourse}
-            />
-          ))}
-        </div>
-      </div>
+      {selectedMultiple && (
+        <MultipleCourseDialog course={selectedMultiple} onClose={() => setSelectedMultiple(null)} />
+      )}
     </div>
   );
 }

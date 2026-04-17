@@ -92,5 +92,8 @@ export const TeacherService = {
     },
     deleteStudent : async (courseId: string, studentId: string) =>{
         await api.patch('/teacher/deleteStudent',{courseId,studentId},{withCredentials: true})
+    },
+    patchTeacher : async (teacherId : string, name: string, dob: Date,address: string, phone: string, gender:string)=>{
+        await api.patch(`/teacher/patchTeacher/${teacherId}`,{name, dob,address,phone, gender},{withCredentials: true})
     }
 }

@@ -1,3 +1,4 @@
+import type { NullSchema } from "node_modules/zod/v4/core/json-schema.d.cts";
 
 
 export interface Student {
@@ -49,6 +50,7 @@ export interface WaitCourse{
   summary: string,
   teacherId: string,
   teacherName: string,
+  imageUrl: string
 }
 export interface DashboardNotificationDTO {
   id: string;              
@@ -71,8 +73,10 @@ export interface adminState {
     courses : Course[] | null,
     payments : Payment[] | null,
     waitCourses : WaitCourse[] | null,
+    waitMultipleCourses : WaitCourse[] | null,
     notifications : Notification[] | null,
     receivedNotifications: DashboardNotificationDTO[] | null,
+    setWaitMultipleCourse : (waitMultipleCourses : WaitCourse[]) => void
     setNotifications : (notifications: Notification[]) => void
     setReceivedNotificatons : (receivedNotifications : DashboardNotificationDTO[]) => void,
     setWaitCourses: (waitCourses : WaitCourse[]) => void,
