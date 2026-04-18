@@ -164,7 +164,30 @@ export default function CommentDialog({ open, onClose, courseId }: CommentDialog
     replyForm.reset();
   };
 
-  return (
+  // 🔥 thêm reply
+  const handleAddReply = (commentId: string) => {
+    if (!replyText.trim()) return;
+
+    const newReply: Reply = {
+      replyId: "rep-" + Date.now(),
+      content: replyText,
+      createdAt: new Date().toLocaleTimeString(),
+      user: currentUser,
+    };
+
+    setComments((prev) =>
+      prev.map((cmt) =>
+        cmt.commentId === commentId
+          ? { ...cmt, replies: [...cmt.replies, newReply] }
+          : cmt
+      )
+    );
+
+    setReplyText("");
+    setReplyBox(null);
+  };
+
+  return createPortal(
     <div
       className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm transition-opacity"
       onClick={onClose}
@@ -296,6 +319,7 @@ export default function CommentDialog({ open, onClose, courseId }: CommentDialog
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
