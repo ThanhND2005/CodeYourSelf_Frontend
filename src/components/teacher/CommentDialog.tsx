@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { TeacherService } from "@/services/TeacherService";
+import { useTeacherStore } from "@/stores/useTeacherStore";
 
 // --- SCHEMAS TÁCH BIỆT ---
 const commentSchema = z.object({
@@ -22,23 +24,10 @@ interface ReplyMock {
   userId: string;
   content: string;
   createdAt: string;
-  
-  // UI cần thêm
   userName: string;
   avatarUrl?: string;
 }
 
-interface CommentMock {
-  commentId: string;
-  courseId: string;
-  userId: string;
-  content: string;
-  createdAt: string;
-  // UI cần thêm
-  userName: string;
-  avatarUrl?: string;
-  // BỎ REPLIES LỒNG NHAU THEO YÊU CẦU
-}
 
 interface CommentDialogProps {
   open: boolean;
@@ -47,42 +36,11 @@ interface CommentDialogProps {
 }
 
 // Giả lập Database chứa tất cả phản hồi trên server
-const MOCK_REPLIES_DB: ReplyMock[] = [
-  {
-    replyId: "uuid-reply-1",
-    commentId: "uuid-cmt-1", // Khớp với mã bình luận dưới
-    userId: "uuid-user-2",
-    content: "Đồng tình nha bạn ơi! Bài giảng rất chi tiết.",
-    createdAt: "2025-12-26T11:00:00",
-    
-    userName: "Trần An",
-  },
-];
+
 
 export default function CommentDialog({ open, onClose, courseId }: CommentDialogProps) {
   // 1. STATE BÌNH LUẬN CHÍNH
-  const [comments, setComments] = useState<CommentMock[]>([
-    {
-      commentId: "uuid-cmt-1",
-      courseId: courseId || "default-course",
-      userId: "uuid-user-1",
-      content: "K bt mấy bài về sau thế nào chứ bài đầu tiên đã thấy hay phết r",
-      createdAt: "2025-12-26T10:30:00",
-      
-      userName: "Nguyễn Linh",
-      avatarUrl: "",
-    },
-    {
-      commentId: "uuid-cmt-2",
-      courseId: courseId || "default-course",
-      userId: "uuid-user-3",
-      content: "Cho mình hỏi bài tập phần này nộp ở đâu ạ?",
-      createdAt: "2025-12-27T08:15:00",
-      
-      userName: "Lê Văn B",
-      avatarUrl: "",
-    }
-  ]);
+  const {comments,setComment} = useTeacherStore()
 
   // 2. STATE PHẢN HỒI (Lưu trữ phản hồi theo commentId)
   const [repliesMap, setRepliesMap] = useState<Record<string, ReplyMock[]>>({});
@@ -118,76 +76,52 @@ export default function CommentDialog({ open, onClose, courseId }: CommentDialog
     // Giả lập gọi API lấy danh sách phản hồi khớp với mã bình luận (commentId)
     if (!repliesMap[commentId]) {
       // Hàm filter này mô phỏng câu query: SELECT * FROM Reply WHERE commentId = ?
-      const fetchedReplies = MOCK_REPLIES_DB.filter((r) => r.commentId === commentId);
+      const {replies} = await TeacherService.getReply(commentId)
       
       setRepliesMap((prev) => ({
         ...prev,
-        [commentId]: fetchedReplies,
+        [commentId]: replies,
       }));
     }
   };
 
   // --- HÀM XỬ LÝ: SUBMIT BÌNH LUẬN MỚI ---
-  const onSubmitComment = (data: CommentFormValues) => {
-    const newComment: CommentMock = {
-      commentId: crypto.randomUUID(),
-      courseId: courseId || "default-course",
-      userId: "my-user-id",
-      content: data.content,
-      createdAt: new Date().toISOString(),
-      userName: "Bạn",
-    };
+  const onSubmitComment = async (data: CommentFormValues) => {
+    const userId = useTeacherStore.getState().teacher?.userId as string
+    const courseId1 = useTeacherStore.getState().course?.courseId as string
+    try {
+      await TeacherService.postComment(courseId1,userId,data.content)
+      const {comments : comments1} = await TeacherService.getComment(courseId1)
+      setComment(comments1)
+    } catch (error) {
+      console.error(error)
+    }finally{
+      commentForm.reset();
 
-    setComments([...comments, newComment]);
-    commentForm.reset();
+    }
   };
 
   // --- HÀM XỬ LÝ: SUBMIT PHẢN HỒI MỚI ---
-  const onSubmitReply = (data: ReplyFormValues) => {
+  const onSubmitReply = async (data: ReplyFormValues) => {
     if (!activeReplyId) return;
-
-    const newReply: ReplyMock = {
-      replyId: crypto.randomUUID(),
-      commentId: activeReplyId,
-      userId: "my-user-id",
-      content: data.content,
-      createdAt: new Date().toISOString(),
-      userName: "Bạn",
-    };
+    const userId = useTeacherStore.getState().teacher?.userId as string
+    try {
+      await TeacherService.postReply(activeReplyId, userId,data.content)
+      const {replies} = await TeacherService.getReply(activeReplyId)
+      setRepliesMap((prev) => ({
+        ...prev,
+        [activeReplyId]: [...(prev[activeReplyId] || []), replies],
+      }));
+    } catch (error) {
+      console.error(error)
+    }
 
     // Cập nhật lại danh sách phản hồi của commentId đó
-    setRepliesMap((prev) => ({
-      ...prev,
-      [activeReplyId]: [...(prev[activeReplyId] || []), newReply],
-    }));
 
     replyForm.reset();
   };
 
-  // 🔥 thêm reply
-  const handleAddReply = (commentId: string) => {
-    if (!replyText.trim()) return;
-
-    const newReply: Reply = {
-      replyId: "rep-" + Date.now(),
-      content: replyText,
-      createdAt: new Date().toLocaleTimeString(),
-      user: currentUser,
-    };
-
-    setComments((prev) =>
-      prev.map((cmt) =>
-        cmt.commentId === commentId
-          ? { ...cmt, replies: [...cmt.replies, newReply] }
-          : cmt
-      )
-    );
-
-    setReplyText("");
-    setReplyBox(null);
-  };
-
-  return createPortal(
+  return (
     <div
       className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm transition-opacity"
       onClick={onClose}
@@ -230,7 +164,7 @@ export default function CommentDialog({ open, onClose, courseId }: CommentDialog
 
         {/* DANH SÁCH BÌNH LUẬN */}
         <div className="flex-1 overflow-y-auto space-y-5 pr-2 custom-scrollbar">
-          {comments.map((cmt) => (
+          {comments?.map((cmt) => (
             <div key={cmt.commentId} className="flex gap-3">
               <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0">
                 {cmt.avatarUrl && <img src={cmt.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />}
@@ -319,7 +253,6 @@ export default function CommentDialog({ open, onClose, courseId }: CommentDialog
           </button>
         </div>
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }

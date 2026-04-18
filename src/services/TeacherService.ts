@@ -30,6 +30,17 @@ export const TeacherService = {
     postComment : async (courseId: string, userId: string, content: string) =>{
         await api.post(`/teacher/postComment/${courseId}`,{userId,content},{withCredentials: true})
     },
+    postReply : async (commentId: string, userId: string, content: string) =>{
+        await api.post(`/teacher/postReply/${commentId}`,{userId,content},{withCredentials: true})
+    },
+    getComment : async (courseId: string) =>{
+        const res = await api.get(`/teacher/getComment/${courseId}`,{withCredentials: true})
+        return res.data
+    },
+    getReply : async (commentId: string) =>{
+        const res = await api.get(`/teacher/getReply/${commentId}`,{withCredentials : true})
+        return res.data
+    },
     patchAvatar : async (userId: string, avatar: File) =>{
         const formData = new FormData()
         formData.append('avatar',avatar)

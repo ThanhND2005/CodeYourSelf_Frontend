@@ -91,7 +91,26 @@ export interface MonthlyIncomeStat {
   highestCourseSales: number;
   newStudents: number;       
 }
-
+export interface ReplyMock {
+  replyId: string;
+  commentId: string;
+  userId: string;
+  content: string;
+  createdAt: string;
+  userName: string;
+  avatarUrl?: string;
+}
+export interface CommentMock {
+  commentId: string;
+  courseId: string;
+  userId: string;
+  content: string;
+  createdAt: string;
+  
+  userName: string;
+  avatarUrl?: string;
+  
+}
 export interface teacherState {
     loading: boolean,
     teacher:Teacher | null,
@@ -102,6 +121,10 @@ export interface teacherState {
     videos : Video[] | null
     stats : MonthlyIncomeStat[] | null
     course: Course | null 
+    comments : CommentMock[] | null 
+    replies : ReplyMock[] | null
+    setComment : (comments : CommentMock[]) => void
+    setReply : (replies : ReplyMock[]) => void
     setCourse: (course: Course) => void
     setStats : (stats : MonthlyIncomeStat[]) => void
     setNotifications: (notifications : Notification[]) => void
