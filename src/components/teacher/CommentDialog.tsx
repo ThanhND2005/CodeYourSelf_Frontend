@@ -107,10 +107,11 @@ export default function CommentDialog({ open, onClose, courseId }: CommentDialog
     const userId = useTeacherStore.getState().teacher?.userId as string
     try {
       await TeacherService.postReply(activeReplyId, userId,data.content)
-      const {replies} = await TeacherService.getReply(activeReplyId)
+      const {replies : replies3} = await TeacherService.getReply(activeReplyId)
+      console.log(replies3)
       setRepliesMap((prev) => ({
         ...prev,
-        [activeReplyId]: [...(prev[activeReplyId] || []), replies],
+        [activeReplyId]: replies3, // 👈 Sửa dòng này (xóa phần dấu ba chấm đi)
       }));
     } catch (error) {
       console.error(error)
@@ -198,7 +199,9 @@ export default function CommentDialog({ open, onClose, courseId }: CommentDialog
                     {/* DANH SÁCH PHẢN HỒI LẤY ĐƯỢC TỪ DB */}
                     {repliesMap[cmt.commentId]?.map(reply => (
                       <div key={reply.replyId} className="flex gap-2">
-                        <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0"></div>
+                        <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0">
+                          {reply.avatarUrl && <img src={reply.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />}
+                        </div>
                         <div className="bg-white rounded-2xl p-2.5 border border-purple-100 flex-1 shadow-sm">
                            <div className="flex items-center gap-2 mb-1">
                             <span className="font-semibold text-gray-800 text-sm">{reply.userName}</span>
