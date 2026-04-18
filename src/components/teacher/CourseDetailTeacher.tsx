@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Trash2, MessageSquare, User, Calendar, Activity, GraduationCap } from "lucide-react";
 import { useTeacherStore } from "@/stores/useTeacherStore";
 import { TeacherService } from "@/services/TeacherService";
+import CommentDialog from "./CommentDialog"; // Đảm bảo đường dẫn import này đúng với project của bạn
 
 // --- INTERFACES ---
 export interface Course {
@@ -27,25 +28,25 @@ export interface CourseStudent {
   progress: number;
 }
 
-
 export default function CourseDetailTeacher() {
-  // State quản lý danh sách học viên (dùng tạm mock data)
-  const {students, course,setStudents} =useTeacherStore()
+  const { students, course, setStudents ,setComment} = useTeacherStore()
+  const [openComment, setOpenComment] = useState(false);
 
   // --- HANDLERS ---
   const handleDeleteStudent = async (studentId: string) => {
     try {
       await TeacherService.deleteStudent(course?.courseId as string, studentId)
-      const {students} = await TeacherService.getStudents(course?.courseId as string)
+      const { students } = await TeacherService.getStudents(course?.courseId as string)
       setStudents(students)
     } catch (error) {
       console.error(error)
     }
   };
 
-  const handleOpenComments = () => {
-    console.log(`Mở modal/chuyển trang bình luận cho khóa học: ${course?.courseId}`);
-    // TODO: Thêm logic điều hướng hoặc mở Dialog bình luận ở đây
+  const handleOpenComments = async () => {
+    const {comments} = await TeacherService.getComment(course?.courseId as string)
+    setComment(comments)
+    setOpenComment(true)
   };
 
   return (
@@ -149,6 +150,13 @@ export default function CourseDetailTeacher() {
             Xem Bình luận
           </button>
         </div>
+        
+        {/* COMPONENT DIALOG MỚI */}
+        <CommentDialog 
+          open={openComment} 
+          onClose={() => setOpenComment(false)} 
+          courseId={course?.courseId} 
+        />
       </div>
     </div>
   );
