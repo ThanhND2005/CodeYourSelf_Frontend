@@ -19,6 +19,7 @@ export interface Teacher {
     phone: string,
     gender: string,
     createdAt: Date,
+    avatarUrl: string,
 }
 export interface Course{
     courseId: string, 
@@ -67,6 +68,17 @@ export interface Notification {
   content: string;
   createdAt: string;
 }
+export interface Salary {
+  salaryId: string;
+  createdAt: string;
+  amount: number;
+  teacherId: string;
+  status: string; // "PAID" | "PENDING"
+  qrUrl: string;
+  periodMonth: number;
+  periodYear: number;
+}
+
 export interface adminState {
     students: Student[] | null,
     teachers: Teacher[] | null,
@@ -76,6 +88,8 @@ export interface adminState {
     waitMultipleCourses : WaitCourse[] | null,
     notifications : Notification[] | null,
     receivedNotifications: DashboardNotificationDTO[] | null,
+    salary : Salary[] | null 
+    setSalary : (salary : Salary[]) => void
     setWaitMultipleCourse : (waitMultipleCourses : WaitCourse[]) => void
     setNotifications : (notifications: Notification[]) => void
     setReceivedNotificatons : (receivedNotifications : DashboardNotificationDTO[]) => void,

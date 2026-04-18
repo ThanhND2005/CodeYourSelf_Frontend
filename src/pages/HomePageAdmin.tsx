@@ -24,6 +24,7 @@ export default function HomePageAdmin() {
     setReceivedNotificatons,
     setNotifications,
     setWaitMultipleCourse,
+    setSalary,
   } = useAdminStore();
   const navigate = useNavigate();
   const logout = async () => {
@@ -64,6 +65,11 @@ export default function HomePageAdmin() {
     setWaitCourses(waitCourses)
     setWaitMultipleCourse(waitMultipleCourses)
   };
+  const onclickRevenue = async () => {
+    setTabActive('revenue')
+    const {teacherBills} = await AdminServices.getSalary()
+    setSalary(teacherBills) 
+  }
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#F8F2F9] to-[#CBABCF]">
       {/* HEADER */}
@@ -133,7 +139,7 @@ export default function HomePageAdmin() {
           </div>
 
           <div
-            onClick={() => setTabActive("revenue")}
+            onClick={() => onclickRevenue()}
             className={cn(
               "flex flex-col items-center gap-1 cursor-pointer",
               tabActive === "revenue" && "text-[#851385]",

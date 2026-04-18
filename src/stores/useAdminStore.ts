@@ -1,4 +1,4 @@
-import {type adminState, type Course, type DashboardNotificationDTO, type Notification, type Payment, type Student, type Teacher, type WaitCourse } from "@/types/admin";
+import {type adminState, type Course, type DashboardNotificationDTO, type Notification, type Payment, type Salary, type Student, type Teacher, type WaitCourse } from "@/types/admin";
 
 import { create } from "zustand";
 
@@ -13,6 +13,8 @@ export const useAdminStore = create<adminState>((set,get)=>({
     receivedNotifications : null,
     notifications: null,
     waitMultipleCourses : null,
+    salary : null,
+    setSalary : (salary : Salary[]) => set({salary}),
     setWaitMultipleCourse: (waitMultipleCourses : WaitCourse[]) => set({waitMultipleCourses}),
     setNotifications: (notifications : Notification[]) => set({notifications}),
     setReceivedNotificatons : (receivedNotifications : DashboardNotificationDTO[]) => set({receivedNotifications}),
