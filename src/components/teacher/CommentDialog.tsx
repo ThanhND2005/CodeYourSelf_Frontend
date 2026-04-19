@@ -40,7 +40,7 @@ interface CommentDialogProps {
 
 export default function CommentDialog({ open, onClose, courseId }: CommentDialogProps) {
   // 1. STATE BÌNH LUẬN CHÍNH
-  const {comments,setComment} = useTeacherStore()
+  const {comments,setComment,teacher} = useTeacherStore()
 
   // 2. STATE PHẢN HỒI (Lưu trữ phản hồi theo commentId)
   const [repliesMap, setRepliesMap] = useState<Record<string, ReplyMock[]>>({});
@@ -139,8 +139,10 @@ export default function CommentDialog({ open, onClose, courseId }: CommentDialog
         {/* FORM 1: TẠO BÌNH LUẬN */}
         <form onSubmit={commentForm.handleSubmit(onSubmitComment)} className="mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-purple-100 flex-shrink-0 border border-purple-200"></div>
-            
+            <div className="w-10 h-10 rounded-full bg-purple-100 flex-shrink-0 border border-purple-200">
+              {teacher?.avatarUrl && <img src={teacher?.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />}
+            </div>
+             
             <div className="flex-1 flex flex-col gap-1">
               <input
                 {...commentForm.register("content")}
@@ -216,7 +218,9 @@ export default function CommentDialog({ open, onClose, courseId }: CommentDialog
 
                     {/* FORM 2: TẠO PHẢN HỒI */}
                     <form onSubmit={replyForm.handleSubmit(onSubmitReply)} className="flex items-start gap-2 pt-2">
-                      <div className="w-8 h-8 rounded-full bg-purple-100 flex-shrink-0 mt-1"></div>
+                      <div className="w-8 h-8 rounded-full bg-purple-100 flex-shrink-0 mt-1">
+                        {teacher?.avatarUrl && <img src={teacher?.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />}
+                      </div>
                       <div className="flex-1">
                         <div className="flex gap-2">
                           <input
