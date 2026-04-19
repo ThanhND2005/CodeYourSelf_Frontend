@@ -10,6 +10,9 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useNavigate } from "react-router-dom";
 import { getRedirectPath } from "@/lib/navigation";
+import { AdminServices } from "@/services/AdminService";
+import { useAdminStore } from "@/stores/useAdminStore";
+import { useTabAdminStore } from "@/stores/useTabStore";
 
 const SigninSchema = z.object({
   username: z.string().min(1, "Tên đăng nhập không được để trống"),
@@ -31,6 +34,15 @@ export default function SigninPageAdmin({
     resolver: zodResolver(SigninSchema),
   });
   const {signinAdmin} = useAuthStore()
+  const {
+    setCourses,
+    setPayments,
+    setStudents,
+    setTeachers,
+    setWaitCourses,
+    setReceivedNotificatons,
+  } = useAdminStore();
+  const {setTabActive} = useTabAdminStore()
   const navigate = useNavigate()
   const onSubmit = async (data: SigninFormValues) => {
     const {username,password} = data
@@ -39,6 +51,19 @@ export default function SigninPageAdmin({
       const user = useAuthStore.getState().user
       if(user)
       {
+        const { students } = await AdminServices.getStudents();
+        const { teachers } = await AdminServices.getTeachers();
+        const { courses } = await AdminServices.getCourses();
+        const { studentBills } = await AdminServices.getStudentBills();
+        const { waitCourses } = await AdminServices.getWaitCourses();
+        const { receivedNotifications } = await AdminServices.ReceiveNotification();
+        setWaitCourses(waitCourses);
+        setStudents(students);
+        setTeachers(teachers);
+        setCourses(courses);
+        setPayments(studentBills);
+        setReceivedNotificatons(receivedNotifications);
+        setTabActive("dashboard");
         const correctPath = getRedirectPath(user.role as string)
         navigate(correctPath)
       }

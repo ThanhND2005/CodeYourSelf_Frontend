@@ -35,7 +35,7 @@ import CourseDetailTeacher from "@/components/teacher/CourseDetailTeacher";
 
 export default function HomePageTeacher() {
   const {tabActive,setTabActive} = useTabTeacherStore()
-  const {setSingleCourses,setMultipleCoures,setStats} = useTeacherStore()
+  const {setSingleCourses,setMultipleCoures,setStats,setNotifications} = useTeacherStore()
   const signout = useAuthStore((state) => state.signout);
   const navigate = useNavigate();
   const onclickCourse = async() =>{
@@ -49,6 +49,11 @@ export default function HomePageTeacher() {
     const {stats} = await TeacherService.getStats(teacher?.userId as string)
     setStats(stats)
     setTabActive('income')
+  }
+  const onclickNotification = async() =>{
+    const {notifications} = await TeacherService.getNotifications(teacher?.userId as string)
+    setNotifications(notifications)
+    setTabActive("notification")
   }
   const logout = async () => {
     try {
@@ -196,7 +201,7 @@ export default function HomePageTeacher() {
           </div>
 
           <div
-            onClick={() => setTabActive("notification")}
+            onClick={() => onclickNotification()}
             className={cn(
               "flex flex-col items-center gap-1 cursor-pointer",
               tabActive === "notification" && "text-[#851385]"

@@ -4,7 +4,7 @@ import { useAdminStore } from "@/stores/useAdminStore";
 import { TeacherService } from "@/services/TeacherService";
 import { AdminServices } from "@/services/AdminService";
 
-// ─── Interfaces (Dựa trên ảnh và yêu cầu) ───────────────────────────────────
+
 
 export interface WaitCourse {
   courseId: string;
@@ -35,9 +35,7 @@ async function fetchSubCoursesApi(course : WaitCourse): Promise<WaitCourse[]> {
 }
 
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
 
-// Dialog xem chi tiết Khóa Đơn (Single Course)
 function SingleCourseDialog({ course, onClose }: { course: WaitCourse; onClose: () => void }) {
   const [videos, setVideos] = useState<Video[]>([]);
   const [activeVideo, setActiveVideo] = useState<Video | null>(null);
@@ -46,13 +44,7 @@ function SingleCourseDialog({ course, onClose }: { course: WaitCourse; onClose: 
     fetchCourseVideosApi(course.courseId).then(setVideos);
   }, [course]);
 
-  // Xử lý link youtube thành link embed để xem trong iframe
-  const getEmbedUrl = (url: string) => {
-    if (url.includes("youtube.com/watch?v=")) {
-      return url.replace("watch?v=", "embed/").split("&")[0];
-    }
-    return url;
-  };
+  
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
@@ -67,7 +59,7 @@ function SingleCourseDialog({ course, onClose }: { course: WaitCourse; onClose: 
         <div className="p-6 overflow-y-auto flex-1">
           <p className="text-sm text-gray-600 mb-4">{course.summary}</p>
           
-          {/* Trình phát Video */}
+         
           {activeVideo && (
             <div className="mb-6 bg-black rounded-xl overflow-hidden aspect-video">
               {activeVideo.videoUrl.includes("youtube.com") ? (
@@ -110,7 +102,7 @@ function SingleCourseDialog({ course, onClose }: { course: WaitCourse; onClose: 
   );
 }
 
-// Dialog xem chi tiết Khóa Multiple (Combo Course)
+
 function MultipleCourseDialog({ course, onClose }: { course: WaitCourse; onClose: () => void }) {
   const [subCourses, setSubCourses] = useState<WaitCourse[]>([]);
 
@@ -154,7 +146,7 @@ function MultipleCourseDialog({ course, onClose }: { course: WaitCourse; onClose
   );
 }
 
-// Course Card dùng chung cho cả Single và Multiple
+
 function CourseCard({ course, onApprove, onReject, onDetail, isMultiple }: { 
   course: WaitCourse; 
   onApprove: (id: string) => void; 
@@ -164,7 +156,7 @@ function CourseCard({ course, onApprove, onReject, onDetail, isMultiple }: {
 }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4 hover:shadow-md transition">
-      {/* Thumbnail */}
+  
       <div className="w-28 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center">
         {course.imageUrl ? (
           <img src={course.imageUrl} alt={course.name} className="w-full h-full object-cover" />
@@ -173,7 +165,6 @@ function CourseCard({ course, onApprove, onReject, onDetail, isMultiple }: {
         )}
       </div>
 
-      {/* Info */}
       <div className="flex-1 min-w-0 flex flex-col justify-between">
         <div>
           <h3 className={`font-semibold truncate ${isMultiple ? "text-violet-700" : "text-sky-700"}`}>
@@ -187,7 +178,7 @@ function CourseCard({ course, onApprove, onReject, onDetail, isMultiple }: {
         </div>
       </div>
 
-      {/* Actions */}
+ 
       <div className="flex flex-col gap-2 flex-shrink-0 justify-center">
         <button onClick={() => onApprove(course.courseId)} className="flex items-center justify-center gap-1 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-medium transition border border-emerald-200 hover:border-emerald-500">
           <Check className="w-3.5 h-3.5" /> Duyệt
@@ -203,7 +194,7 @@ function CourseCard({ course, onApprove, onReject, onDetail, isMultiple }: {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+
 
 export default function CourseApprovalPage() {
   const {waitCourses,waitMultipleCourses,setWaitCourses,setWaitMultipleCourse} = useAdminStore()
@@ -211,7 +202,7 @@ export default function CourseApprovalPage() {
   const [selectedSingle, setSelectedSingle] = useState<WaitCourse | null>(null);
   const [selectedMultiple, setSelectedMultiple] = useState<WaitCourse | null>(null);
 
-  // Xử lý API cho khóa đơn
+  
   const handleApproveSingle = async (id: string) => {
     try {
       await AdminServices.acceptWaitCourse(id)
@@ -231,7 +222,7 @@ export default function CourseApprovalPage() {
     }
   };
 
-  // Xử lý API cho khóa combo
+  
   const handleApproveMultiple = async (id: string) => {
     try {
       await AdminServices.acceptWaitMultipleCourse(id)
@@ -255,7 +246,7 @@ export default function CourseApprovalPage() {
     <div className="p-6  h-screen flex flex-col gap-6 ">
       <h1 className="text-2xl font-bold text-gray-800 flex-shrink-0">Quản lý xét duyệt khóa học</h1>
 
-      {/* Vùng 1: Khóa học đơn */}
+      
       <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="bg-sky-50 px-6 py-3 border-b border-sky-100 flex items-center gap-2">
           <FileVideo className="text-sky-600 w-5 h-5" />
@@ -278,7 +269,6 @@ export default function CourseApprovalPage() {
         </div>
       </div>
 
-      {/* Vùng 2: Khóa học Multiple (Combo) */}
       <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="bg-violet-50 px-6 py-3 border-b border-violet-100 flex items-center gap-2">
           <Layers className="text-violet-600 w-5 h-5" />
@@ -302,7 +292,7 @@ export default function CourseApprovalPage() {
         </div>
       </div>
 
-      {/* Modals */}
+
       {selectedSingle && (
         <SingleCourseDialog course={selectedSingle} onClose={() => setSelectedSingle(null)} />
       )}
