@@ -19,7 +19,6 @@ export default function CourseLearning() {
   return (
     <div className="flex flex-col max-w-7xl mx-auto mt-8 bg-gray-100 rounded-2xl shadow-xl border border-gray-200">
       
-      {/* MAIN */}
       <div className="flex">
         
         {/* LEFT */}

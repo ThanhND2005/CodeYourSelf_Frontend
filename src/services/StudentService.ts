@@ -24,7 +24,7 @@ export const StudentService = {
     
     getInformation : async (userId: string) =>{
         const res = await api.get(`/student/getInformation/${userId}`, {withCredentials: true})
-        return res.data
+        return res.data.student
     },
 
     patchInformation : async (
@@ -49,5 +49,24 @@ export const StudentService = {
             headers: { 'Content-Type': 'multipart/form-data' },
             withCredentials: true
         })
+    },
+    getNewCourse : async () =>{
+        const res = await api.get(`/student/getNewCourse`,{withCredentials: true})
+        return res.data.newCourses
+    },
+    getTrendingCourse : async () =>{
+        const res = await api.get(`/student/getTrendingCourse`,{withCredentials : true})
+        return res.data.trendingCourses
+    },
+    getNotification : async () => {
+        const res = await api.get('/student/getNotification',{withCredentials: true})
+        return res.data.notifications
+    },
+    getProgressCourse : async() => {
+        const res = await api.get('/student/getProgressCourse',{withCredentials: true})
+        return res.data.progressCourse
+    },
+    patchCourse : async (courseId: string, rate: number) =>{
+        await api.patch('/student/patchCourse',{courseId,rate},{withCredentials: true})
     }
 }

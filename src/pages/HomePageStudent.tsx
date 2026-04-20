@@ -1,13 +1,10 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Home, Bell, User, Map, LogOut, Search } from "lucide-react";
-
-import DashBoard from "@/components/student/DashBoard";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useNavigate } from "react-router-dom";
 
 // Dữ liệu từ Store thực tế
-import { useStudentStore } from "@/stores/useStudentStore";
 import { useTabStudentStore } from "@/stores/useTabStore";
 import { useCourseStore } from "@/stores/useCourseStore";
 import { StudentService } from "@/services/StudentService";
@@ -16,15 +13,17 @@ import CourseDetail from "@/components/student/CourseDetail";
 import StudyProgress from "@/components/student/StudyProgress";
 import CourseSearch from "@/components/student/CourseSearch";
 import SingleCourseDetail from "@/components/student/CourseDetailSingle";
-import CourseLearning from "@/components/student/CourseLearning";
 import StudentProfile from "@/components/student/Profile"; 
+import MarketplaceDashboard from "@/components/student/Home";
+import { useStudentInfor } from "@/hooks/useAuth";
+import CourseLearning from "@/components/student/CourseLearning";
 
 const NotificationTab = () => <div className="p-4">Trang Thông báo</div>;
 const RoadmapTab = () => <div className="p-4">Trang Lộ trình</div>;
 
 export default function HomePageStudent() {
   const { tabActive, setTabActive } = useTabStudentStore();
-  const student = useStudentStore((s) => s.student); // Lấy thông tin tài khoản đăng nhập
+  const {data : student} = useStudentInfor()
   
   const signout = useAuthStore((state) => state.signout);
   const navigate = useNavigate();
@@ -56,10 +55,8 @@ export default function HomePageStudent() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") handleSearch();
   };
-
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#F8F2F9] to-[#CBABCF]">
-      {/* HEADER */}
       <div className="fixed top-0 left-0 w-full h-[80px] flex items-center justify-between px-6 border-b-2 border-gray-300 bg-white/10 backdrop-blur-md z-50">
         <div className="flex gap-2 items-center">
           <div className="w-14 h-14 rounded-2xl overflow-hidden">
@@ -70,8 +67,6 @@ export default function HomePageStudent() {
           </div>
           <h1 className="text-sm font-semibold">Create your future</h1>
         </div>
-
-        {/* Ô SEARCH GIỮ NGUYÊN KIỂU CŨ */}
         <div className="relative flex items-center">
           <button type="button" onClick={() => handleSearch()} className="flex justify-center items-center">
             <Search className="absolute left-3 text-gray-500" size={18} />
@@ -85,12 +80,10 @@ export default function HomePageStudent() {
             onKeyDown={handleKeyDown}
           />
         </div>
-
-        {/* TOPBAR: CHỈ HIỆN AVATAR & TÊN, MATCH VỚI STORE */}
         <div className="flex items-center gap-3">
           <div 
             className="cursor-pointer text-right"
-            onClick={() => setTabActive("profile")} // Click vào là chuyển tab Profile
+            onClick={() => setTabActive("profile")} 
           >
             <p className="text-gray-800 text-sm font-semibold">
               {student?.name || "Đang tải..."}
@@ -110,7 +103,6 @@ export default function HomePageStudent() {
           </div>
         </div>
       </div>
-
       {/* SIDEBAR CŨ GIỮ Y HỆT BAN ĐẦU */}
       <div className="fixed top-[80px] left-0 w-[90px] h-[calc(100vh-80px)] bg-white/10 backdrop-blur-md flex flex-col items-center py-6 gap-6 shadow-lg z-40">
         <div className="flex flex-col items-center gap-6 text-gray-700">
@@ -158,7 +150,6 @@ export default function HomePageStudent() {
             <span className="text-xs">Lộ trình</span>
           </div>
         </div>
-
         <div
           className="mt-auto flex flex-col items-center gap-1 text-gray-700 hover:text-[#851385] cursor-pointer"
           onClick={() => logout()}
@@ -167,11 +158,9 @@ export default function HomePageStudent() {
           <span className="text-xs">Đăng xuất</span>
         </div>
       </div>
-
-      {/* CONTENT */}
       <div className="pt-[80px] pl-[90px]">
         <div className="p-6 overflow-y-auto min-h-[calc(100vh-80px)]">
-          {tabActive === "dashboard" && <CourseLearning />}
+          {tabActive === "dashboard" && <CourseLearning/>}
           {tabActive === "notification" && <NotificationTab />}
           {tabActive === "profile" && <StudentProfile />} 
           {tabActive === "roadmap" && <RoadmapTab />}

@@ -33,7 +33,7 @@ export default function SigninPage({
     resolver: zodResolver(SigninSchema),
   });
   const {signin} = useAuthStore()
-  const {setStudent} = useStudentStore()
+  const {setStudent,setNewCourse,setTrendingCourse} = useStudentStore()
   const navigate = useNavigate()
   const onSubmit = async (data: SigninFormValues) => {
     const {username, password} = data
@@ -43,6 +43,10 @@ export default function SigninPage({
       if(user)
       {
         const {student} = await StudentService.getInformation(user.userId as string)
+        const {trendingCourses} = await StudentService.getTrendingCourse()
+        const {newCourses} =  await StudentService.getNewCourse()
+        setTrendingCourse(trendingCourses)
+        setNewCourse(newCourses)
         setStudent(student)
         const correctPath = getRedirectPath(user.role as string)
         navigate(correctPath)
