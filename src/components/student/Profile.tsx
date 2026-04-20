@@ -71,14 +71,14 @@ const StudentProfile = () => {
   const onSubmitInfo = async (data: InfoFormValues) => {
     try {
       await StudentService.patchInformation(
-        student?.userId!,
+        student?.userId as string,
         data.name,
         data.dob,
         data.address,
         data.phone,
         data.gender
       );
-      const res = await StudentService.getInformation(student?.userId!);
+      const res = await StudentService.getInformation(student?.userId as string);
       setStudent(res.student || res); // Cập nhật store
       setIsInfoDialogOpen(false);
     } catch (error) { console.error(error); }
@@ -86,8 +86,8 @@ const StudentProfile = () => {
 
   const onSubmitAvatar = async (data: AvatarFormValues) => {
     try {
-      await StudentService.patchAvatar(student?.userId!, data.avatar[0]);
-      const res = await StudentService.getInformation(student?.userId!);
+      await StudentService.patchAvatar(student?.userId as string, data.avatar[0]);
+      const res = await StudentService.getInformation(student?.userId as string);
       setStudent(res.student || res);
       setIsAvatarDialogOpen(false);
     } catch (error) { console.error(error); }

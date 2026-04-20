@@ -11,6 +11,8 @@ import { authService } from "@/services/authService";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getRedirectPath } from "@/lib/navigation";
 import { useNavigate } from "react-router-dom";
+import { StudentService } from "@/services/StudentService";
+import { useStudentStore } from "@/stores/useStudentStore";
 
 const SigninSchema = z.object({
   username: z.string().min(1, "Tên đăng nhập không được để trống"),
@@ -31,6 +33,7 @@ export default function SigninPage({
     resolver: zodResolver(SigninSchema),
   });
   const {signin} = useAuthStore()
+  const {setStudent} = useStudentStore()
   const navigate = useNavigate()
   const onSubmit = async (data: SigninFormValues) => {
     const {username, password} = data
@@ -39,6 +42,8 @@ export default function SigninPage({
       const user = useAuthStore.getState().user
       if(user)
       {
+        const {student} = await StudentService.getInformation(user.userId as string)
+        setStudent(student)
         const correctPath = getRedirectPath(user.role as string)
         navigate(correctPath)
       }
