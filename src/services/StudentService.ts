@@ -20,5 +20,34 @@ export const StudentService = {
     getCoursePaid : async (courseId: string) =>{
         const res = await api.get(`/student/getCoursePaid/${courseId}`,{withCredentials: true})
         return res.data
+    },
+    
+    getInformation : async (userId: string) =>{
+        const res = await api.get(`/student/getInformation/${userId}`, {withCredentials: true})
+        return res.data
+    },
+
+    patchInformation : async (
+        userId: string, 
+        name: string, 
+        dob: Date, 
+        address: string, 
+        phone: string, 
+        gender: string
+    ) => {
+        await api.patch(
+            `/student/patchInformation/${userId}`, 
+            { name, dob, address, phone, gender }, 
+            { withCredentials: true }
+        )
+    },
+
+    patchAvatar : async (userId: string, avatar: File) =>{
+        const formData = new FormData()
+        formData.append('avatar', avatar)
+        await api.patch(`/student/patchAvatar/${userId}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            withCredentials: true
+        })
     }
 }
