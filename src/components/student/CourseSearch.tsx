@@ -1,4 +1,4 @@
-import { StudentService } from "@/services/Student";
+import { StudentService } from "@/services/StudentService";
 import { useCourseStore } from "@/stores/useCourseStore";
 import { useTabStudentStore } from "@/stores/useTabStore";
 import React from "react";

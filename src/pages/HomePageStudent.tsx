@@ -16,7 +16,7 @@ import StudyProgress from "@/components/student/StudyProgress";
 import { useTabStudentStore } from "@/stores/useTabStore";
 import CourseSearch from "@/components/student/CourseSearch";
 import { useCourseStore } from "@/stores/useCourseStore";
-import { StudentService } from "@/services/Student";
+import { StudentService } from "@/services/StudentService";
 import SingleCourseDetail from "@/components/student/CourseDetailSingle";
 import CourseLearning from "@/components/student/CourseLearning";
 
