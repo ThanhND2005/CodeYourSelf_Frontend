@@ -10,14 +10,14 @@ import { useCourseStore } from "@/stores/useCourseStore";
 import { StudentService } from "@/services/StudentService";
 
 import CourseDetail from "@/components/student/CourseDetail";
-import StudyProgress from "@/components/student/StudyProgress";
+
 import CourseSearch from "@/components/student/CourseSearch";
 import SingleCourseDetail from "@/components/student/CourseDetailSingle";
 import StudentProfile from "@/components/student/Profile"; 
 import MarketplaceDashboard from "@/components/student/Home";
 import { useStudentInfor } from "@/hooks/useAuth";
 import CourseLearning from "@/components/student/CourseLearning";
-import DashBoard from "@/components/student/DashBoard";
+
 import StudentRoadmapSelected from "@/components/student/RoadMap";
 
 export default function HomePageStudent() {
@@ -155,7 +155,7 @@ export default function HomePageStudent() {
           {tabActive === "profile" && <StudentProfile />} 
           
           {tabActive === "coursedetail" && <CourseDetail/>}
-          {tabActive === "progress" && <StudyProgress/>}
+         
           {tabActive === "search" && <CourseSearch/>}
           {tabActive === "coursedetail2" && <SingleCourseDetail/>}
           {tabActive === "courselearning" && <CourseLearning/>}

@@ -16,21 +16,10 @@ import {
   Loader2
 } from "lucide-react";
 import { StudentService } from "@/services/StudentService";
+import type { Course } from "@/types/course";
 
 // --- 1. TYPES & MOCK DATA (Chuẩn theo DB Schema) ---
-export interface Course {
-  courseId: string;
-  name: string;
-  cost: number;
-  summary: string;
-  deleted: number;
-  teacherId: string;
-  rate: number;
-  multipleCourseId: string; 
-  status: string;
-  imageUrl: string;
-  createdAt: string;
-}
+
 
 export interface RoadmapStep {
   id: string; 
@@ -178,7 +167,7 @@ export default function StudentRoadmapSelected() {
       // const result = await res.json();
 
       // MOCK CALL API 
-      await new Promise(resolve => setTimeout(resolve, 800));
+      
       const calculatedTotal = Object.values(data.selectedCourses).reduce((sum, c) => sum + c.cost, 0);
       
       setInvoiceData({

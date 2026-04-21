@@ -4,6 +4,7 @@ import { CheckCircle, PlayCircle } from "lucide-react";
 import { useLessonProgress, useVideo } from "@/hooks/useCourses";
 import { StudentService } from "@/services/StudentService";
 import { useCourseStore } from "@/stores/useCourseStore";
+import RatingDialog from "./RatingDialog";
 // import { useCourseStore } from "@/stores/useCourseStore"; // Mở lại nếu bạn có dùng
 
 export default function CourseLearning() {
@@ -14,7 +15,17 @@ export default function CourseLearning() {
   // Lấy data từ API
   const { data: videos } = useVideo();
   const { data: lessonprogress } = useLessonProgress();
-
+  const handleRatingSubmit = async (
+    courseId: string,
+    rate: number
+  ): Promise<void> => {
+    try {
+      await StudentService.patchCourse(courseId, rate);
+      console.log("Rating success");
+    } catch (err) {
+      console.error("Rating failed:", err);
+    }
+  };
   // ==========================================
   // STATE & REFS CHO TRACKING TIẾN ĐỘ
   // ==========================================
@@ -214,22 +225,12 @@ export default function CourseLearning() {
       </div>
 
       {/* ================= DIALOG ĐÁNH GIÁ ================= */}
-      {openRating && (
-         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center backdrop-blur-sm">
-         <div className="bg-white w-80 p-6 rounded-xl shadow-2xl">
-           <h2 className="text-lg font-semibold mb-5 text-center">Đánh giá khóa học</h2>
-           <div className="flex justify-center gap-2 mb-6">
-             {[1, 2, 3, 4, 5].map((star) => (
-               <span key={star} onClick={() => setRating(star)} className={`text-3xl cursor-pointer transition ${star <= rating ? "text-yellow-400" : "text-gray-300"} hover:scale-125`}>★</span>
-             ))}
-           </div>
-           <div className="flex justify-end gap-3">
-             <button onClick={() => { setOpenRating(false); setRating(0); }} className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition font-medium">Hủy</button>
-             <button onClick={() => { console.log("Rating:", rating); setOpenRating(false); setRating(0); }} disabled={rating === 0} className={`px-4 py-2 rounded-lg text-white font-medium transition ${rating === 0 ? "bg-gray-300 cursor-not-allowed" : "bg-[#851385] hover:bg-[#6a0f6a]"}`}>Gửi</button>
-           </div>
-         </div>
-       </div>
-      )}
+      <RatingDialog
+        open={openRating}
+        onClose={() => setOpenRating(false)}
+        courseId={useCourseStore.getState().course?.courseId as string}
+        onSubmit={handleRatingSubmit}
+      />
 
       {/* COMMENT DIALOG */}
       <CommentDialog open={openComment} onClose={() => setOpenComment(false)} />
