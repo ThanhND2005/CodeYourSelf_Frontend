@@ -10,7 +10,7 @@ import { useCourseStore } from "@/stores/useCourseStore";
 import { StudentService } from "@/services/StudentService";
 
 import CourseDetail from "@/components/student/CourseDetail";
-import StudyProgress from "@/components/student/StudyProgress";
+
 import CourseSearch from "@/components/student/CourseSearch";
 import SingleCourseDetail from "@/components/student/CourseDetailSingle";
 import StudentProfile from "@/components/student/Profile"; 
@@ -18,8 +18,7 @@ import MarketplaceDashboard from "@/components/student/Home";
 import { useStudentInfor } from "@/hooks/useAuth";
 import CourseLearning from "@/components/student/CourseLearning";
 
-const NotificationTab = () => <div className="p-4">Trang Thông báo</div>;
-const RoadmapTab = () => <div className="p-4">Trang Lộ trình</div>;
+import StudentRoadmapSelected from "@/components/student/RoadMap";
 
 export default function HomePageStudent() {
   const { tabActive, setTabActive } = useTabStudentStore();
@@ -117,16 +116,7 @@ export default function HomePageStudent() {
             <span className="text-xs">Trang chủ</span>
           </div>
 
-          <div
-            onClick={() => setTabActive("notification")}
-            className={cn(
-              "flex flex-col items-center gap-1 cursor-pointer",
-              tabActive === "notification" && "text-[#851385]"
-            )}
-          >
-            <Bell size={22} />
-            <span className="text-xs">Thông báo</span>
-          </div>
+         
 
           <div
             onClick={() => setTabActive("profile")}
@@ -160,14 +150,16 @@ export default function HomePageStudent() {
       </div>
       <div className="pt-[80px] pl-[90px]">
         <div className="p-6 overflow-y-auto min-h-[calc(100vh-80px)]">
-          {tabActive === "dashboard" && <CourseLearning/>}
-          {tabActive === "notification" && <NotificationTab />}
+          {tabActive === "dashboard" && <MarketplaceDashboard/>}
+          
           {tabActive === "profile" && <StudentProfile />} 
-          {tabActive === "roadmap" && <RoadmapTab />}
+          
           {tabActive === "coursedetail" && <CourseDetail/>}
-          {tabActive === "progress" && <StudyProgress/>}
+         
           {tabActive === "search" && <CourseSearch/>}
           {tabActive === "coursedetail2" && <SingleCourseDetail/>}
+          {tabActive === "courselearning" && <CourseLearning/>}
+          {tabActive === "roadmap" && <StudentRoadmapSelected/>}
         </div>
       </div>
     </div>

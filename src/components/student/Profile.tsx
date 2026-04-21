@@ -4,15 +4,27 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { BookOpen, CheckCircle, BarChart, Bell, CalendarClock } from "lucide-react";
+import { 
+  BookOpen, 
+  CheckCircle, 
+  BarChart, 
+  Bell, 
+  CalendarClock,
+  ChevronDown,
+  ChevronUp,
+  Layers
+} from "lucide-react";
 import { StudentService } from "@/services/StudentService";
 import { useStudentInfor } from "@/hooks/useAuth";
 import { QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { data } from "react-router-dom";
 import { useNotifcations, useProgressCourse } from "@/hooks/useStudent";
+import { useCourseStore } from "@/stores/useCourseStore";
+import { useTabStudentStore } from "@/stores/useTabStore";
+import { useMultipleCourse } from "@/hooks/useCourses";
 
 // ==============================
-// 1. SCHEMAS (Giữ nguyên)
+// 1. SCHEMAS
 // ==============================
 const infoSchema = z.object({
   name: z.string().min(1, "Họ và tên không được để trống"),
@@ -44,15 +56,17 @@ type AvatarFormValues = z.infer<typeof avatarSchema>;
 
 
 
-// Dựa trên bảng Notification
-
 const ProfileAndDashboard = () => {
-  const {data : student} = useStudentInfor()
+  const { data: student } = useStudentInfor();
+  const {data : multipleCourses} = useMultipleCourse()
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const {data : progressCourse} = useProgressCourse()
-  console.log(progressCourse)
+  
+  // State quản lý Multiple Course đang mở
+  const [expandedMultipleCourse, setExpandedMultipleCourse] = useState<string | null>(null);
+
+  const { data: progressCourse } = useProgressCourse();
   const {
     register: registerInfo,
     handleSubmit: handleSubmitInfo,
@@ -76,39 +90,44 @@ const ProfileAndDashboard = () => {
       return () => URL.revokeObjectURL(objectUrl);
     }
   }, [avatarFile]);
-  const queryClient = useQueryClient()
+  
+  const queryClient = useQueryClient();
 
   // --- HANDLERS CHO PROFILE ---
   const onUpdateInforMutation = useMutation({
-    mutationFn : async (data : InfoFormValues) =>{
-      return await StudentService.patchInformation(student.userId, data.name,data.dob,data.address,data.phone,data.gender)
+    mutationFn: async (data: InfoFormValues) => {
+      return await StudentService.patchInformation(student.userId, data.name, data.dob, data.address, data.phone, data.gender);
     },
-    onSuccess: () =>{
-      queryClient.invalidateQueries({queryKey:['auth','student']})
-      setIsInfoDialogOpen(false)
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['auth', 'student'] });
+      setIsInfoDialogOpen(false);
     },
-    onError: (error) =>{
-      console.error(error)
+    onError: (error) => {
+      console.error(error);
     }
-  })
-  const onSubmitInfo = async (data : InfoFormValues) => {
-    onUpdateInforMutation.mutate(data)
-  }
-  const updateAvatarMutation  = useMutation({
-    mutationFn: async (file : File) =>{
-      return await StudentService.patchAvatar(student?.userId as string, file)
+  });
+
+  const onSubmitInfo = async (data: InfoFormValues) => {
+    onUpdateInforMutation.mutate(data);
+  };
+
+  const updateAvatarMutation = useMutation({
+    mutationFn: async (file: File) => {
+      return await StudentService.patchAvatar(student?.userId as string, file);
     },
-    onSuccess:() =>{
-      queryClient.invalidateQueries({queryKey:['auth','student']})  
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['auth', 'student'] });
       setIsAvatarDialogOpen(false);
     },
-    onError: (error) =>{
-      console.error(error)
+    onError: (error) => {
+      console.error(error);
     }
-  })
+  });
+
   const onSubmitAvatar = async (data: AvatarFormValues) => {
-    updateAvatarMutation.mutate(data.avatar[0])
+    updateAvatarMutation.mutate(data.avatar[0]);
   };
+
   const handleOpenInfoDialog = () => {
     const toInputDate = (date: any) => new Date(date).toISOString().split('T')[0];
     resetInfo({
@@ -117,11 +136,26 @@ const ProfileAndDashboard = () => {
     } as any);
     setIsInfoDialogOpen(true);
   };
-  const handleContinueCourse = (courseId: string, courseName: string) => {
-    console.log(`Chuyển hướng đến khóa học: ${courseId} - ${courseName}`);
+
+  const { setCourse } = useCourseStore();
+  const { setTabActive } = useTabStudentStore();
+  
+  const handleContinueCourse = async (courseId: string) => {
+    try {
+      const { course } = await StudentService.getDetailCourse(courseId);
+      setCourse(course);
+      setTabActive('courselearning');
+    } catch (error) {
+      console.error(error);
+    }
   };
+
   const handleViewNotification = (notificationId: string) => {
     console.log(`Đánh dấu đã đọc và xem chi tiết thông báo: ${notificationId}`);
+  };
+
+  const handleToggleMultipleCourse = (id: string) => {
+    setExpandedMultipleCourse(prev => prev === id ? null : id);
   };
 
   const learningCount = progressCourse?.filter(c => c.status === 'learning').length;
@@ -129,7 +163,9 @@ const ProfileAndDashboard = () => {
   const avgProgress = progressCourse?.length 
     ? Math.round(progressCourse.reduce((acc, curr) => acc + curr.progress, 0) / progressCourse.length) 
     : 0;
-  const {data : notifications} = useNotifcations()
+  
+  const { data: notifications } = useNotifcations();
+
   return (
     <div className="w-full mx-auto p-4 md:p-8 font-sans space-y-8">
       
@@ -214,26 +250,22 @@ const ProfileAndDashboard = () => {
           PHẦN 3: COURSES & NOTIFICATIONS
       ========================================= */}
       <section className="flex flex-col lg:flex-row gap-6 h-[400px]">
-        {/* Cột trái: Khóa học của tôi (Cuộn, tối đa 2 hàng) */}
+        {/* Cột trái: Khóa học của tôi */}
         <div className="flex-1 bg-[#FBD8F8] p-4 rounded-2xl shadow flex flex-col h-full">
-          <h2 className="mb-4 font-medium text-lg text-gray-800">Khóa học của tôi</h2>
-          {/* Vùng chứa cuộn: max-h phù hợp cho ~2 hàng card */}
+          <h2 className="mb-4 font-medium text-lg text-gray-800">Khóa học đơn lẻ</h2>
           <div className="overflow-y-auto pr-2 custom-scrollbar flex-1 pb-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {progressCourse?.map((course ) => (
+              {progressCourse?.map((course) => (
                 <div
                   key={course.courseId}
-                  className={cn(
-                    "p-4 rounded-xl shadow flex flex-col justify-between h-[130px] bg-white" ,
-        
-                  )}
+                  className="p-4 rounded-xl shadow flex flex-col justify-between h-[130px] bg-white"
                 >
                   <div>
                     <h3 className="font-semibold line-clamp-1" title={course.name}>{course.name}</h3>
                     <p className="text-sm mt-1 opacity-90">Tiến độ: {course.progress}%</p>
                   </div>
                   <Button 
-                    onClick={() => handleContinueCourse(course.courseId, course.name)}
+                    onClick={() => handleContinueCourse(course.courseId)}
                     className="mt-3 w-max !bg-[#FBD8F8] text-[#851385] hover:bg-white transition-colors h-8 px-4 text-sm"
                   >
                     Tiếp tục
@@ -275,7 +307,76 @@ const ProfileAndDashboard = () => {
       </section>
 
       {/* =========================================
-          DIALOGS (Giữ nguyên từ Profile)
+          PHẦN 4: MULTIPLE COURSES (LỘ TRÌNH HỌC)
+      ========================================= */}
+      <section className="bg-orange-50 p-6 rounded-2xl shadow border border-orange-100">
+        <div className="flex items-center gap-2 mb-6 text-amber-900">
+          <Layers size={24} />
+          <h2 className="font-bold text-xl">Lộ trình học của bạn (Multiple Courses)</h2>
+        </div>
+        
+        <div className="flex flex-col gap-4">
+          {multipleCourses?.map((mc) => {
+            const isExpanded = expandedMultipleCourse === mc.multipleCourseId;
+            
+            return (
+              <div key={mc.multipleCourseId} className="bg-white rounded-xl shadow-sm border border-orange-200 overflow-hidden transition-all">
+                {/* Header Lộ Trình */}
+                <div 
+                  className="p-5 flex items-center justify-between cursor-pointer hover:bg-orange-50 transition-colors"
+                  onClick={() => handleToggleMultipleCourse(mc.multipleCourseId)}
+                >
+                  <div className="flex items-center gap-4">
+                    <img src={mc.imageUrl} alt={mc.name} className="w-16 h-16 rounded-lg object-cover border border-orange-100" />
+                    <div>
+                      <h3 className="font-bold text-lg text-amber-950">{mc.name}</h3>
+                      <p className="text-sm text-gray-600 mt-1">{mc.sumary}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-medium bg-amber-100 text-amber-800 px-3 py-1 rounded-full">
+                      {mc.courses.length} Khóa học
+                    </span>
+                    {isExpanded ? <ChevronUp className="text-amber-700" /> : <ChevronDown className="text-amber-700" />}
+                  </div>
+                </div>
+
+                {/* Danh sách Khóa Học Con (Hiển thị khi mở rộng) */}
+                {isExpanded && (
+                  <div className="border-t border-orange-100 bg-orange-50/50 p-5">
+                    <h4 className="text-sm font-semibold text-amber-900 mb-3 uppercase tracking-wider">Danh sách khóa học</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {mc.courses.map((child) => (
+                        <div key={child.courseId} className="bg-white p-4 rounded-lg border border-orange-100 shadow-sm flex flex-col justify-between">
+                          <div>
+                            <h5 className="font-medium text-gray-800 mb-2">{child.name}</h5>
+                            <div className="w-full bg-gray-200 rounded-full h-2 mb-1">
+                              <div className="bg-amber-500 h-2 rounded-full" style={{ width: `${child.progress}%` }}></div>
+                            </div>
+                            <p className="text-xs text-right text-gray-500">{child.progress}% hoàn thành</p>
+                          </div>
+                          <Button 
+                            onClick={(e) => {
+                              e.stopPropagation(); // Ngăn sự kiện toggle lộ trình khi bấm nút
+                              handleContinueCourse(child.courseId);
+                            }}
+                            className="mt-4 w-full bg-orange-600 hover:bg-orange-700 text-white transition-colors"
+                          >
+                            {child.progress === 0 ? "Bắt đầu học" : "Học tiếp"}
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* =========================================
+          DIALOGS
       ========================================= */}
       {isInfoDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -285,16 +386,16 @@ const ProfileAndDashboard = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="col-span-1 sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700">Họ và tên</label>
-                  <input {...registerInfo("name")} className="mt-1 w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-purple-500" />
+                  <input {...registerInfo("name")} className="mt-1 w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-orange-500" />
                   {infoErrors.name && <p className="text-red-500 text-xs mt-1">{infoErrors.name.message}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Ngày sinh</label>
-                  <input type="date" {...registerInfo("dob")} className="mt-1 w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-purple-500" />
+                  <input type="date" {...registerInfo("dob")} className="mt-1 w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-orange-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Giới tính</label>
-                  <select {...registerInfo("gender")} className="mt-1 w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-purple-500">
+                  <select {...registerInfo("gender")} className="mt-1 w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-orange-500">
                     <option value="Nam">Nam</option>
                     <option value="Nữ">Nữ</option>
                     <option value="Khác">Khác</option>
@@ -302,17 +403,17 @@ const ProfileAndDashboard = () => {
                 </div>
                 <div className="col-span-1 sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700">Địa chỉ</label>
-                  <input {...registerInfo("address")} className="mt-1 w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-purple-500" />
+                  <input {...registerInfo("address")} className="mt-1 w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-orange-500" />
                 </div>
                 <div className="col-span-1 sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
-                  <input type="tel" {...registerInfo("phone")} className="mt-1 w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-purple-500" />
+                  <input type="tel" {...registerInfo("phone")} className="mt-1 w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-orange-500" />
                   {infoErrors.phone && <p className="text-red-500 text-xs mt-1">{infoErrors.phone.message}</p>}
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-6">
                 <button type="button" onClick={() => setIsInfoDialogOpen(false)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium">Hủy</button>
-                <button type="submit" className="px-4 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800 font-medium">Lưu thay đổi</button>
+                <button type="submit" className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium">Lưu thay đổi</button>
               </div>
             </form>
           </div>
@@ -328,17 +429,17 @@ const ProfileAndDashboard = () => {
                 type="file" 
                 accept="image/*" 
                 {...registerAvatar("avatar")} 
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 outline-none" 
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 outline-none" 
               />
               {avatarErrors.avatar && <p className="text-red-500 text-xs mt-2">{String(avatarErrors.avatar.message)}</p>}
               {avatarPreview && (
                 <div className="mt-6 flex justify-center">
-                  <img src={avatarPreview} alt="Preview" className="w-32 h-32 rounded-full object-cover border-4 border-purple-100 shadow-sm" />
+                  <img src={avatarPreview} alt="Preview" className="w-32 h-32 rounded-full object-cover border-4 border-orange-100 shadow-sm" />
                 </div>
               )}
               <div className="flex justify-end gap-3 mt-8">
                 <button type="button" onClick={() => setIsAvatarDialogOpen(false)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Hủy</button>
-                <button type="submit" className="px-4 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800 font-medium">Cập nhật ảnh</button>
+                <button type="submit" className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium">Cập nhật ảnh</button>
               </div>
             </form>
           </div>

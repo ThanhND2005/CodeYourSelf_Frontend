@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import PaymentDialog from "./PaymentDialog";
 import { useCourseStore } from "@/stores/useCourseStore";
+import { useVideo } from "@/hooks/useCourses";
 
 export default function SingleCourseDetail() {
   const formatCurrency = (amount: number) => {
@@ -17,7 +18,8 @@ export default function SingleCourseDetail() {
       ? "Miễn phí" 
       : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
-  const {course,videos} = useCourseStore()
+  const {course} = useCourseStore()
+  const { data: videos } = useVideo();
   return (
     <div className="p-6">
       <h1 className="text-4xl font-bold mb-6">
@@ -110,7 +112,7 @@ export default function SingleCourseDetail() {
 
             <div className="flex items-center gap-3">
               <div className="p-2 bg-[#fbd8f8] rounded-lg text-[#851385] shadow-sm"><BookOpen size={20} /></div>
-              <span>Tổng số bài học: {videos.length} bài</span>
+              <span>Tổng số bài học: {videos?.length} bài</span>
             </div>
 
             <div className="flex items-center gap-3">

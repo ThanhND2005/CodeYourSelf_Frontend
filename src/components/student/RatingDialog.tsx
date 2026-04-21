@@ -1,47 +1,92 @@
 import React, { useState } from "react";
 
-export default function RatingDialog({ open, onClose }: any) {
-  const [rating, setRating] = useState(0);
+type RatingDialogProps = {
+  open: boolean;
+  onClose: () => void;
+  courseId: string;
+  onSubmit: (courseId: string, rating: number) => Promise<void>;
+};
+
+export default function RatingDialog({
+  open,
+  onClose,
+  courseId,
+  onSubmit,
+}: RatingDialogProps) {
+  const [rating, setRating] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(false);
 
   if (!open) return null;
 
+  const handleClose = () => {
+    if (loading) return;
+    setRating(0);
+    onClose();
+  };
+
+  const handleSubmit = async () => {
+    if (rating === 0 || loading) return;
+
+    try {
+      setLoading(true);
+      await onSubmit(courseId, rating);
+      setRating(0);
+      onClose();
+    } catch (err) {
+      console.error("Submit rating failed:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white w-96 p-6 rounded-2xl shadow-lg border border-[#851385]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="text-lg font-semibold mb-6 text-[#851385]">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center backdrop-blur-sm">
+      <div className="bg-white w-80 p-6 rounded-xl shadow-2xl">
+        <h2 className="text-lg font-semibold mb-5 text-center">
           Đánh giá khóa học
         </h2>
 
-        <div className="flex justify-center gap-3 mb-8">
+        {/* STAR */}
+        <div className="flex justify-center gap-2 mb-6">
           {[1, 2, 3, 4, 5].map((star) => (
-            <svg
+            <span
               key={star}
-              onClick={() => setRating(star)}
-              fill={star <= rating ? "#851385" : "none"}
-              stroke="#851385"
-              viewBox="0 0 24 24"
-              className="w-10 h-10 cursor-pointer"
+              onClick={() => !loading && setRating(star)}
+              className={`text-3xl cursor-pointer transition ${
+                star <= rating ? "text-yellow-400" : "text-gray-300"
+              } ${
+                loading
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:scale-125"
+              }`}
             >
-              <path
-                strokeWidth={1.5}
-                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l2.036 6.26a1 1 0 00.95.69h6.588c.969 0 1.371 1.24.588 1.81l-5.33 3.873a1 1 0 00-.364 1.118l2.036 6.26c.3.921-.755 1.688-1.54 1.118l-5.33-3.873a1 1 0 00-1.176 0l-5.33 3.873c-.784.57-1.838-.197-1.539-1.118l2.036-6.26a1 1 0 00-.364-1.118L2.337 11.687c-.783-.57-.38-1.81.588-1.81h6.588a1 1 0 00.95-.69l2.036-6.26z"
-              />
-            </svg>
+              ★
+            </span>
           ))}
         </div>
 
-        <button
-          onClick={onClose}
-          className="w-full py-2 rounded-xl text-white bg-[#851385]"
-        >
-          Đánh giá
-        </button>
+        {/* ACTION */}
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={handleClose}
+            disabled={loading}
+            className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition font-medium disabled:opacity-50"
+          >
+            Hủy
+          </button>
+
+          <button
+            onClick={handleSubmit}
+            disabled={rating === 0 || loading}
+            className={`px-4 py-2 rounded-lg text-white font-medium transition ${
+              rating === 0 || loading
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-[#851385] hover:bg-[#6a0f6a]"
+            }`}
+          >
+            {loading ? "Đang gửi..." : "Gửi"}
+          </button>
+        </div>
       </div>
     </div>
   );
