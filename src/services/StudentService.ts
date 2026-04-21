@@ -19,7 +19,7 @@ export const StudentService = {
     },
     getCoursePaid : async (courseId: string) =>{
         const res = await api.get(`/student/getCoursePaid/${courseId}`,{withCredentials: true})
-        return res.data
+        return res.data.videos
     },
     
     getInformation : async (userId: string) =>{
@@ -68,5 +68,15 @@ export const StudentService = {
     },
     patchCourse : async (courseId: string, rate: number) =>{
         await api.patch('/student/patchCourse',{courseId,rate},{withCredentials: true})
+    },
+    getLessonProgress : async (courseId : string)=>{
+        const res = await api.get(`/student/getLessonProgress/${courseId}`,{withCredentials: true})
+        return res.data.progress
+    },
+    SyncProgress : async (videoId: string, currentTime : number, isCompleted : boolean) =>{
+        await api.patch(`/student/SyncProgress`,{videoId,currentTime,isCompleted},{withCredentials: true})
+    },
+    patchCourseProgress : async (courseId : string) =>{
+        await api.patch(`/student/patchCourseProgress/${courseId}`,{},{withCredentials: true})
     }
 }

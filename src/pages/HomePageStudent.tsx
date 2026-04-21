@@ -17,6 +17,7 @@ import StudentProfile from "@/components/student/Profile";
 import MarketplaceDashboard from "@/components/student/Home";
 import { useStudentInfor } from "@/hooks/useAuth";
 import CourseLearning from "@/components/student/CourseLearning";
+import DashBoard from "@/components/student/DashBoard";
 
 const NotificationTab = () => <div className="p-4">Trang Thông báo</div>;
 const RoadmapTab = () => <div className="p-4">Trang Lộ trình</div>;
@@ -160,7 +161,7 @@ export default function HomePageStudent() {
       </div>
       <div className="pt-[80px] pl-[90px]">
         <div className="p-6 overflow-y-auto min-h-[calc(100vh-80px)]">
-          {tabActive === "dashboard" && <CourseLearning/>}
+          {tabActive === "dashboard" && <MarketplaceDashboard/>}
           {tabActive === "notification" && <NotificationTab />}
           {tabActive === "profile" && <StudentProfile />} 
           {tabActive === "roadmap" && <RoadmapTab />}
@@ -168,6 +169,7 @@ export default function HomePageStudent() {
           {tabActive === "progress" && <StudyProgress/>}
           {tabActive === "search" && <CourseSearch/>}
           {tabActive === "coursedetail2" && <SingleCourseDetail/>}
+          {tabActive == "courselearning" && <CourseLearning/>}
         </div>
       </div>
     </div>

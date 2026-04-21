@@ -10,6 +10,8 @@ import { useStudentInfor } from "@/hooks/useAuth";
 import { QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { data } from "react-router-dom";
 import { useNotifcations, useProgressCourse } from "@/hooks/useStudent";
+import { useCourseStore } from "@/stores/useCourseStore";
+import { useTabStudentStore } from "@/stores/useTabStore";
 
 // ==============================
 // 1. SCHEMAS (Giữ nguyên)
@@ -52,7 +54,6 @@ const ProfileAndDashboard = () => {
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const {data : progressCourse} = useProgressCourse()
-  console.log(progressCourse)
   const {
     register: registerInfo,
     handleSubmit: handleSubmitInfo,
@@ -117,8 +118,16 @@ const ProfileAndDashboard = () => {
     } as any);
     setIsInfoDialogOpen(true);
   };
-  const handleContinueCourse = (courseId: string, courseName: string) => {
-    console.log(`Chuyển hướng đến khóa học: ${courseId} - ${courseName}`);
+  const {setCourse} = useCourseStore()
+  const {setTabActive} = useTabStudentStore()
+  const handleContinueCourse = async (courseId: string) => {
+    try {
+      const {course} = await StudentService.getDetailCourse(courseId)
+      setCourse(course)
+      setTabActive('courselearning')
+    } catch (error) {
+      console.error(error)
+    }
   };
   const handleViewNotification = (notificationId: string) => {
     console.log(`Đánh dấu đã đọc và xem chi tiết thông báo: ${notificationId}`);
