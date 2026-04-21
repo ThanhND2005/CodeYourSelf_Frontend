@@ -5,7 +5,9 @@ import type { CourseRecord } from '@/types/student';
 import { useQuery } from '@tanstack/react-query';
 import { StudentService } from '@/services/StudentService';
 import { useNewCourses, useTrendingCourses } from '@/hooks/useCourses';
-
+import { useCourseStore } from '@/stores/useCourseStore';
+import { useTabStudentStore } from '@/stores/useTabStore';
+// import { useNavigate } from 'react-router-dom'; // Import useNavigate nếu bạn dùng react-router-dom
 
 // Helper: Format tiền tệ VNĐ
 const formatVND = (amount: number) => {
@@ -29,10 +31,11 @@ const RatingStars = ({ rate }: { rate: number }) => {
 };
 
 // Component: Course Card
-const CourseCard = ({ course, onClick }: { course: CourseRecord, onClick: (id: string) => void }) => {
+// Cập nhật: onClick nhận thêm isMultiple
+const CourseCard = ({ course, onClick }: { course: CourseRecord, onClick: (id: string, isMultiple: string) => void }) => {
   return (
     <div 
-      onClick={() => onClick(course.courseId)}
+      onClick={() => onClick(course.courseId, course.isMultiple)}
       className="min-w-[240px] max-w-[240px] flex-shrink-0 cursor-pointer group flex flex-col h-full hover:opacity-90 transition-opacity bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md relative"
     >
       {/* Badge hiển thị loại khóa học dựa trên isMultiple */}
@@ -63,17 +66,15 @@ const CourseCard = ({ course, onClick }: { course: CourseRecord, onClick: (id: s
             <span className="text-xs text-gray-400 line-through">
               {formatVND(course.cost*5)}
             </span>
-          
         </div>
-
-        
       </div>
     </div>
   );
 };
 
 // Component: Khối danh sách khóa học (Có nút cuộn ngang 2 bên)
-const CourseSection = ({ title, courses, onCourseAction }: { title: string, courses: CourseRecord[], onCourseAction: (id: string) => void }) => {
+// Cập nhật: onCourseAction nhận thêm isMultiple
+const CourseSection = ({ title, courses, onCourseAction }: { title: string, courses: CourseRecord[], onCourseAction: (id: string, isMultiple: string) => void }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Hàm xử lý cuộn sang phải
@@ -131,13 +132,36 @@ const CourseSection = ({ title, courses, onCourseAction }: { title: string, cour
 
 // 3. Main Page Layout
 export default function MarketplaceDashboard() {
-  const handleCourseInteraction = (courseId: string) => {
-    console.log(`User clicked on course: ${courseId}`);
-    alert(`Đang chuyển hướng tới chi tiết khóa học ID: ${courseId}`);
+  const {setCourse,setMultipleCourse,setVideos,setCourses} = useCourseStore()
+  const {setTabActive} = useTabStudentStore()
+  // Cập nhật: Xử lý logic điều hướng dựa trên isMultiple
+  const handleCourseInteraction = async (courseId: string, isMultiple: string) => {
+    if (isMultiple === "true") {
+      try {
+        const {multipleCourse} = await StudentService.getDetailMultipleCourse(courseId)
+        const {courses} = await StudentService.getDetailCourses(courseId)
+        setMultipleCourse(multipleCourse)
+        setCourses(courses)
+        setTabActive("coursedetail")
+      } catch (error) {
+        console.error(error)
+      }
+    } else {
+      try {
+        const {course} = await StudentService.getDetailCourse(courseId)
+        const {videos} = await StudentService.getCoursePaid(courseId)
+        setCourse(course)
+        setVideos(videos)
+        setTabActive("coursedetail2")
+      } catch (error) {
+        console.error(error)
+      }
+    }
   };
   
   const {data : trendingCourses} = useTrendingCourses()
   const {data : newCourses}  = useNewCourses()
+
   return (
     <div className="min-h-screen py-8 px-6 md:px-12 font-sans ">
       <div className="max-w-7xl mx-auto">

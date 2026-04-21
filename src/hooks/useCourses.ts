@@ -32,3 +32,10 @@ export const useLessonProgress = () =>{
         staleTime : Infinity
     })
 }
+export const useMultipleCourse = () =>{
+    return useQuery({
+        queryKey : ['course','multiple'],
+        queryFn : StudentService.getMultipleCourseByStudentId,
+        staleTime: Infinity
+    })
+}

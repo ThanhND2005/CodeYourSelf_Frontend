@@ -5,6 +5,10 @@ export const StudentService = {
         const res = await api.get(`/student/searchCourse`,{params: {searchTerm},withCredentials: true})
         return res.data
     },
+    searchSingleCourse : async (searchTerm : string) =>{
+        const res = await api.get(`/student/searchSingleCourse`,{params: {searchTerm},withCredentials: true})
+        return res.data
+    },
     getDetailMultipleCourse : async (multipleCourseId : string) =>{
         const res = await api.get(`/student/getDetailMultipleCourse/${multipleCourseId}`,{withCredentials: true})
         return res.data
@@ -78,5 +82,9 @@ export const StudentService = {
     },
     patchCourseProgress : async (courseId : string) =>{
         await api.patch(`/student/patchCourseProgress/${courseId}`,{},{withCredentials: true})
+    },
+    getMultipleCourseByStudentId : async () =>{
+        const res = await api.get(`/student/getMultipleCourseByStudentId`,{withCredentials: true})
+        return res.data.multipleCourses
     }
 }

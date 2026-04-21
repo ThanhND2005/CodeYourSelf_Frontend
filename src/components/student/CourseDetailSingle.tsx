@@ -110,7 +110,7 @@ export default function SingleCourseDetail() {
 
             <div className="flex items-center gap-3">
               <div className="p-2 bg-[#fbd8f8] rounded-lg text-[#851385] shadow-sm"><BookOpen size={20} /></div>
-              <span>Tổng số bài học: {videos.length} bài</span>
+              <span>Tổng số bài học: {videos?.length} bài</span>
             </div>
 
             <div className="flex items-center gap-3">
