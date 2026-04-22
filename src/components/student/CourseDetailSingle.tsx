@@ -11,6 +11,7 @@ import {
 import PaymentDialog from "./PaymentDialog";
 import { useCourseStore } from "@/stores/useCourseStore";
 import { useVideo } from "@/hooks/useCourses";
+import { StudentService } from "@/services/StudentService";
 
 export default function SingleCourseDetail() {
   const formatCurrency = (amount: number) => {
@@ -18,8 +19,12 @@ export default function SingleCourseDetail() {
       ? "Miễn phí" 
       : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
-  const {course} = useCourseStore()
+  const {course,setPayment} = useCourseStore()
   const { data: videos } = useVideo();
+  const registerClick = async () =>{
+    const payment = await StudentService.getBillSingleCourse(course?.courseId as string)
+    setPayment(payment)
+  }
   return (
     <div className="p-6">
       <h1 className="text-4xl font-bold mb-6">
@@ -93,7 +98,7 @@ export default function SingleCourseDetail() {
           </div>
 
           <PaymentDialog>
-            <button className="w-full bg-[#851385] hover:bg-[#6a0f6a] text-white py-3.5 rounded-xl font-bold text-lg mb-6 shadow-md transition-all active:scale-95 hover:shadow-lg">
+            <button className="w-full bg-[#851385] hover:bg-[#6a0f6a] text-white py-3.5 rounded-xl font-bold text-lg mb-6 shadow-md transition-all active:scale-95 hover:shadow-lg" onClick={() => registerClick()}>
               Đăng ký khóa học
             </button>
           </PaymentDialog>

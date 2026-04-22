@@ -86,5 +86,16 @@ export const StudentService = {
     getMultipleCourseByStudentId : async () =>{
         const res = await api.get(`/student/getMultipleCourseByStudentId`,{withCredentials: true})
         return res.data.multipleCourses
+    },
+    getBillSingleCourse : async (courseId: string) =>{
+        const res = await api.get(`/student/getBillSingleCourse/${courseId}`,{withCredentials: true})
+        return res.data.payment
+    },
+    PaymentSucces : async (paymentId: string) =>{
+        await api.post(`/student/PaymentSucces/${paymentId}`,{},{withCredentials: true})
+    },
+    getBillSingleCourse2 : async (paymentId: string)=>{
+        const res = await api.get(`/student/getBillSingleCourse2/${paymentId}`,{withCredentials: true})
+        return res.data.payment
     }
 }

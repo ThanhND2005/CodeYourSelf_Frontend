@@ -1,5 +1,4 @@
-import type { NullSchema } from "node_modules/zod/v4/core/json-schema.d.cts";
-
+import type { Payment } from "./course";
 
 export interface Student {
     userId: string, 
@@ -31,19 +30,7 @@ export interface Course{
     multipleCourseId: string, 
     imageUrl: string,
 }
-export interface Payment{
-    paymentId: string, 
-    createdAt: Date,
-    amount: number,
-    courseId: string,
-    courseName: string,
-    studentId: string,
-    studentName: string,
-    qrUrl: string,
-    status: string,
-    periodMonth : number, 
-    periodYear: number
-}
+
 export interface WaitCourse{
   courseId: string,
   name: string,
