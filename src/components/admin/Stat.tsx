@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Download, QrCode, Trash2, X } from "lucide-react";
 import { useAdminStore } from "@/stores/useAdminStore";
 import type { Salary, Teacher } from "@/types/admin";
@@ -58,7 +58,31 @@ function TeacherInvoiceCard({
   onViewQR: (qrUrl: string) => void;
 }) {
   const { teacher, salary } = data;
-
+  const setSalary = useAdminStore((state) => state.setSalary);
+  useEffect(() =>{
+    if(!salary) return
+    let interval : ReturnType<typeof setInterval>
+    if(salary.status == "PENDING"){
+      interval = setInterval(async () =>{
+        try {
+          console.log(salary.salaryId)
+          const salary1 = await AdminServices.getTeacherBill(salary.salaryId)
+          if(salary1 && salary1.status == "PAID"){
+            const {teacherBills} = await AdminServices.getSalary()
+            setSalary(teacherBills)
+            clearInterval(interval)
+          }
+        } catch (error) {
+          console.error(error)
+        }
+      },5000)
+    }
+    return () => {
+      if(interval){
+        clearInterval(interval)
+      }
+    }
+  },[salary.status,salary.salaryId])
   return (
     <div className="bg-white rounded-2xl p-5 flex flex-col items-center gap-3 shadow-sm min-w-[320px] max-w-[320px] flex-shrink-0 snap-center border border-gray-100 relative">
       <button 
@@ -149,7 +173,7 @@ export default function DoanhSoPage() {
   const invoices = useMemo<TeacherSalaryCard[]>(() => {
     if (!salaries || !teachers) return [];
 
-    const filtered = salaries.filter(s => s.periodMonth === selectedMonth && s.periodYear === selectedYear);
+    const filtered = salaries?.filter(s => s.periodMonth === selectedMonth && s.periodYear === selectedYear);
     
     const cards = filtered.map(salary => {
       const teacher = teachers.find(t => t.userId === salary.teacherId);

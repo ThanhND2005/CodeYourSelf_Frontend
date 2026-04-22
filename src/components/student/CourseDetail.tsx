@@ -40,7 +40,7 @@ export default function CourseDetail() {
     return amount === 0 ? "Miễn phí" : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
   const registerClick = async () =>{ 
-    const payment = await StudentService.getBillSingleCourse(multipleCourse?.multipleCourseId as string)
+    const payment = await StudentService.getBillMultipleCourse(multipleCourse?.multipleCourseId as string)
     setPayment(payment)
   }
   return (

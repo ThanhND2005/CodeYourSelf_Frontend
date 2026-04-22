@@ -15,10 +15,10 @@ import { useEffect } from "react";
   
 
   
-  export default function PaymentDialog2({
+  export default function PaymentDialog3({
     children,
   }: PaymentDialogProps) {
-    const {payment,courses,multipleCourse} = useCourseStore()
+    const {payment} = useCourseStore()
     const {setTabActive} = useTabStudentStore()
     useEffect(()=>{
       if(!payment) return 
@@ -29,7 +29,7 @@ import { useEffect } from "react";
             console.log(payment.paymentId)
             const payment2 = await StudentService.getBillSingleCourse2(payment.paymentId)
             if(payment2 && payment2.status == "SUCCESS"){
-              await StudentService.PaymentSuccess2(payment.paymentId)
+              await StudentService.PaymentSuccessRoadmap(payment.paymentId)
               setTabActive('profile')
               clearInterval(interval)
             }
@@ -56,11 +56,11 @@ import { useEffect } from "react";
             {/* HEADER */}
             <div>
               <h2 className="text-2xl font-bold">
-                {multipleCourse?.name}
+                Khóa học tự xây dựng
               </h2>
   
               <p className="text-lg font-medium">
-                Thầy: {courses ? courses[0].teacherName : 'Ẩn danh'}
+                Bao gồm nhiều giáo viên
               </p>
             </div>
   
@@ -71,14 +71,13 @@ import { useEffect } from "react";
               <h3 className="font-bold text-xl">
                 Tổng quan về khóa học:
               </h3>
-              <p>
-                + Tổng bài học:
-                {" "}
-                {courses?.length} khóa
-              </p>
+  
+            
+  
+           
   
               <p>
-                + Giá: {multipleCourse?.cost} vnđ
+                + Giá: {payment?.amount} vnđ
               </p>
             </div>
   

@@ -72,5 +72,9 @@ export const AdminServices ={
     getWaitMultipleCourses : async () => {
         const res = await api.get(`/admin/getWaitMultipleCourses`,{withCredentials: true})
         return res.data
+    },
+    getTeacherBill : async (salaryId : string) =>{
+        const res = await api.get(`/admin/getTeacherBill/${salaryId}`,{withCredentials: true})
+        return res.data.salary
     }
 }
