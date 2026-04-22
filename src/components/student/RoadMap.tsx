@@ -6,7 +6,6 @@ import {
   ArrowDown,
   CheckCircle2,
   X,
-  CreditCard,
   ReceiptText,
   Code,
   FileCode2,
@@ -18,14 +17,16 @@ import {
 import { StudentService } from "@/services/StudentService";
 import type { Course } from "@/types/course";
 
-// --- 1. TYPES & MOCK DATA (Chuẩn theo DB Schema) ---
+// IMPORTS MỚI THÊM VÀO
+import PaymentDialog3 from "./PaymentDialog3"; // Nhớ trỏ lại đường dẫn đúng nhé
+import { useCourseStore } from "@/stores/useCourseStore"; // Thay đổi đường dẫn nếu cần
 
-
+// --- 1. TYPES & MOCK DATA ---
 export interface RoadmapStep {
   id: string; 
   title: string;
   icon: React.ElementType;
-  searchKeyword: string; // Đã thêm keyword để tìm kiếm API
+  searchKeyword: string; 
 }
 
 export interface Roadmap {
@@ -41,10 +42,10 @@ const ROADMAPS: Roadmap[] = [
     steps: [
       { id: "step_html", title: "HTML", icon: FileCode2, searchKeyword: "html" },
       { id: "step_css", title: "CSS", icon: LayoutTemplate, searchKeyword: "css" },
-      { id: "step_js", title: "Backend Language", icon: Code, searchKeyword: "nodejs" }, // VD tìm NodeJS
+      { id: "step_js", title: "Backend Language", icon: Code, searchKeyword: "nodejs" }, 
       { id: "step_git", title: "GIT", icon: GitBranch, searchKeyword: "git" },
       { id: "step_db", title: "Database", icon: Database, searchKeyword: "sql" },
-      { id: "step_fw", title: "Framework", icon: Code, searchKeyword: "nestjs" }, // Cập nhật theo Stack của bạn
+      { id: "step_fw", title: "Framework", icon: Code, searchKeyword: "nestjs" }, 
     ],
   },
   {
@@ -52,7 +53,7 @@ const ROADMAPS: Roadmap[] = [
     name: "Frontend Web",
     steps: [
       { id: "step_html", title: "HTML", icon: FileCode2, searchKeyword: "html" },
-      { id: "step_css", title: "CSS", icon: LayoutTemplate, searchKeyword: "tailwind" }, // VD tìm Tailwind
+      { id: "step_css", title: "CSS", icon: LayoutTemplate, searchKeyword: "tailwind" }, 
       { id: "step_js", title: "JavaScript Pro", icon: Code, searchKeyword: "javascript" },
       { id: "step_git", title: "GIT", icon: GitBranch, searchKeyword: "git" },
       { id: "step_fw_fe", title: "Framework UI", icon: LayoutTemplate, searchKeyword: "reactjs" },
@@ -71,7 +72,7 @@ const courseSchema = z.object({
 
 const roadmapSchema = z.object({
   roadmapId: z.string().min(1, "Vui lòng chọn một roadmap để bắt đầu"),
-  selectedCourses: z.record(z.string(), courseSchema).refine(
+  selectedCourses: z.record(z.string(), z.any()).refine(
     (data) => Object.keys(data).length > 0,
     { message: "Vui lòng chọn ít nhất một khóa học" }
   ),
@@ -82,15 +83,12 @@ type RoadmapFormValues = z.infer<typeof roadmapSchema>;
 // --- 3. MAIN COMPONENT ---
 export default function StudentRoadmapSelected() {
   const [activeStep, setActiveStep] = useState<RoadmapStep | null>(null);
-  
-  // State quản lý API và UI
   const [activeStepCourses, setActiveStepCourses] = useState<Course[]>([]);
   const [isLoadingCourses, setIsLoadingCourses] = useState(false);
   const [isSubmittingInvoice, setIsSubmittingInvoice] = useState(false);
-  const [invoiceData, setInvoiceData] = useState<{ total: number, qrData: string } | null>(null);
-  
-  const [showInvoice, setShowInvoice] = useState(false);
-  const [showQR, setShowQR] = useState(false);
+
+  // Lấy hàm setPayment từ Zustand store
+  const { setPayment } = useCourseStore(); // Thay 'as any' bằng type an toàn trong store của bạn
 
   const { watch, setValue, handleSubmit, formState: { errors } } = useForm<RoadmapFormValues>({
     resolver: zodResolver(roadmapSchema),
@@ -104,32 +102,26 @@ export default function StudentRoadmapSelected() {
   const selectedCoursesMap = watch("selectedCourses");
   const currentRoadmap = ROADMAPS.find((r) => r.id === selectedRoadmapId);
 
+  // Kiểm tra xem đã chọn đủ các bước chưa để hiển thị nút tương ứng
+  const requiredStepsCount = currentRoadmap?.steps.length || 0;
+  const selectedStepsCount = Object.keys(selectedCoursesMap).length;
+  const isCompleted = requiredStepsCount > 0 && selectedStepsCount === requiredStepsCount;
+
   // --- 4. HANDLERS ---
   const handleRoadmapChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setValue("roadmapId", e.target.value);
     setValue("selectedCourses", {}); 
-    setShowInvoice(false);
-    setShowQR(false);
   };
 
   const handleOpenCourseSelect = async (step: RoadmapStep) => {
     setActiveStep(step);
     setIsLoadingCourses(true);
-    setActiveStepCourses([]); // Reset list cũ
+    setActiveStepCourses([]); 
     
     try {
-      // TODO: Thay thế bằng API Fetch thực tế sử dụng searchKeyword
-      // Ví dụ: GET /api/courses?keyword=nodejs
-      // const res = await fetch(`YOUR_API_URL/courses?keyword=${encodeURIComponent(step.searchKeyword)}`);
-      // const data = await res.json();
-      
-      // MOCK CALL API (Giả lập mạng delay 600ms)
       await new Promise(resolve => setTimeout(resolve, 600));
-      
-      // Tạo dữ liệu giả lập dựa trên keyword để dễ hình dung
       const {courseSearchs} = await StudentService.searchSingleCourse(step.searchKeyword)
       setActiveStepCourses(courseSearchs);
-
     } catch (error) {
       console.error("Lỗi khi tải khóa học:", error);
     } finally {
@@ -145,47 +137,28 @@ export default function StudentRoadmapSelected() {
     setActiveStep(null); 
   };
 
+  // Hàm xử lý xuất hóa đơn mới
   const onSubmit = async (data: RoadmapFormValues) => {
-    const requiredStepsCount = currentRoadmap?.steps.length || 0;
-    const selectedStepsCount = Object.keys(data.selectedCourses).length;
-
-    if (selectedStepsCount < requiredStepsCount) {
-      alert("Vui lòng hoàn thành việc chọn khóa học cho tất cả các bước trong lộ trình!");
-      return;
-    }
-
     setIsSubmittingInvoice(true);
+    console.log("Đã pass qua validation, đang gọi API..."); // <-- Thêm dòng này để check
+    
+    // Đặt payment = null để PaymentDialog3 hiển thị vòng xoay quay quay
+    setPayment(null);
+
     try {
-      // Dữ liệu sẽ gửi đi backend
       const payload = {
         roadmapId: data.roadmapId,
         selectedCourseIds: Object.values(data.selectedCourses).map(c => c.courseId)
       };
 
-      // TODO: Thay bằng API thực tế
-      // const res = await fetch(`YOUR_API_URL/invoices/create`, { method: 'POST', body: JSON.stringify(payload) });
-      // const result = await res.json();
+      const payment2 = await StudentService.getBillRoadmapCourse(payload.selectedCourseIds)
+      setPayment(payment2)
 
-      // MOCK CALL API 
-      
-      const calculatedTotal = Object.values(data.selectedCourses).reduce((sum, c) => sum + c.cost, 0);
-      
-      setInvoiceData({
-        total: calculatedTotal,
-        qrData: `PAY_${calculatedTotal}_CODEYOURSELF_${Date.now()}` // Mã sinh từ API backend
-      });
-
-      setShowInvoice(true);
     } catch (error) {
       console.error("Lỗi khi tạo hóa đơn:", error);
     } finally {
       setIsSubmittingInvoice(false);
     }
-  };
-
-  const handlePayment = () => {
-    setShowInvoice(false);
-    setShowQR(true);
   };
 
   return (
@@ -241,14 +214,35 @@ export default function StudentRoadmapSelected() {
           })}
 
           <div className="mt-8 self-end">
-            <button
-              onClick={handleSubmit(onSubmit)}
-              disabled={isSubmittingInvoice}
-              className="bg-[#d97706] text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-[#b45309] transition-colors flex items-center gap-2 disabled:opacity-70"
-            >
-              {isSubmittingInvoice ? <Loader2 className="animate-spin" size={20} /> : <ReceiptText size={20} />}
-              Tổng / Xuất hóa đơn
-            </button>
+            {isCompleted ? (
+              // Bọc PaymentDialog3 vào nút khi đã điền đủ thông tin
+              <PaymentDialog3>
+                <button
+                  type="button" // Thêm type="button" để tránh dính dáng đến form submit
+                  onClick={() => {
+                    // Truyền thẳng data hiện tại vào onSubmit thay vì dùng handleSubmit
+                    onSubmit({
+                      roadmapId: selectedRoadmapId,
+                      selectedCourses: selectedCoursesMap
+                    } as any); 
+                  }}
+                  disabled={isSubmittingInvoice}
+                  className="bg-[#d97706] text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-[#b45309] transition-colors flex items-center gap-2 disabled:opacity-70"
+                >
+                  {isSubmittingInvoice ? <Loader2 className="animate-spin" size={20} /> : <ReceiptText size={20} />}
+                  Tổng / Xuất hóa đơn
+                </button>
+              </PaymentDialog3>
+            ) : (
+              // Trạng thái chưa hoàn thành, bấm vào hiện cảnh báo, không mở Dialog
+              <button
+                onClick={() => alert("Vui lòng hoàn thành việc chọn khóa học cho tất cả các bước trong lộ trình!")}
+                className="bg-[#d97706]/70 text-white px-8 py-3 rounded-full font-bold shadow-lg cursor-not-allowed flex items-center gap-2"
+              >
+                <ReceiptText size={20} />
+                Tổng / Xuất hóa đơn
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -303,96 +297,6 @@ export default function StudentRoadmapSelected() {
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: HÓA ĐƠN (INVOICE) */}
-      {showInvoice && invoiceData && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl w-full max-w-2xl p-8 shadow-2xl relative border-[6px] border-[#d97706]">
-             <button
-              onClick={() => setShowInvoice(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-[#4a3b32]"
-            >
-              <X size={24} />
-            </button>
-            <div className="flex justify-between items-start mb-6">
-               <h2 className="text-2xl font-bold text-[#4a3b32]">Chi tiết lộ trình</h2>
-               <div className="bg-orange-100 text-orange-600 p-4 rounded-full">
-                 <ReceiptText size={40} />
-               </div>
-            </div>
-
-            <div className="space-y-3 mb-8 text-lg">
-              {currentRoadmap?.steps.map((step) => {
-                const course = selectedCoursesMap[step.id];
-                if (!course) return null;
-                return (
-                  <div key={course.courseId} className="flex justify-between items-center border-b border-[#f4ebe1] pb-2">
-                    <div className="flex items-center gap-3 font-medium text-[#6d5b50]">
-                       <step.icon size={20} className="text-orange-500" />
-                       {course.name}
-                    </div>
-                    <div className="font-semibold text-[#4a3b32]">
-                      {course.cost === 0 ? "0 VNĐ" : `${(course.cost / 1000)}k VNĐ`}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="flex justify-between items-center mt-6">
-              <div className="text-3xl font-bold text-[#b45309]">
-                Tổng: {(invoiceData.total / 1000)}k VNĐ
-              </div>
-              <button
-                onClick={handlePayment}
-                className="bg-[#d97706] text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-[#b45309] transition-colors flex items-center gap-2"
-              >
-                <CreditCard size={20} />
-                Thanh toán
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: QR THANH TOÁN */}
-      {showQR && invoiceData && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl flex flex-col items-center relative">
-            <button
-              onClick={() => setShowQR(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-[#4a3b32]"
-            >
-              <X size={24} />
-            </button>
-            
-            <h2 className="text-2xl font-bold text-[#d97706] mb-6">Mã VietQR</h2>
-            
-            <div className="bg-white p-4 border-4 border-orange-50 rounded-2xl shadow-sm mb-6">
-               <img 
-                 src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${invoiceData.qrData}`} 
-                 alt="QR Thanh Toan" 
-                 className="w-48 h-48 object-contain"
-               />
-            </div>
-
-            <div className="text-center space-y-1 text-sm font-medium text-[#4a3b32]">
-              <p className="text-orange-600 text-lg font-bold mb-2">Số tiền: {invoiceData.total.toLocaleString('vi-VN')} VNĐ</p>
-              <p>Nội dung CK: <span className="font-bold">THANH TOAN ROADMAP</span></p>
-            </div>
-
-            <button
-              onClick={() => {
-                alert("Đã xác nhận thanh toán thành công!");
-                setShowQR(false);
-              }}
-              className="mt-8 bg-[#d97706] text-white w-full py-3 rounded-xl font-bold shadow-md hover:bg-[#b45309] transition-colors"
-            >
-              Hoàn tất
-            </button>
           </div>
         </div>
       )}

@@ -86,5 +86,44 @@ export const StudentService = {
     getMultipleCourseByStudentId : async () =>{
         const res = await api.get(`/student/getMultipleCourseByStudentId`,{withCredentials: true})
         return res.data.multipleCourses
-    }
+    },
+    getBillSingleCourse : async (courseId: string) =>{
+        const res = await api.get(`/student/getBillSingleCourse/${courseId}`,{withCredentials: true})
+        return res.data.payment
+    },
+    getBillMultipleCourse : async (courseId: string) =>{
+        const res = await api.get(`/student/getBillMultipleCourse/${courseId}`,{withCredentials: true})
+        return res.data.payment
+    },
+    getBillRoadmapCourse : async (selectedCourseIds : string[]) =>{
+        const res = await api.post(`/student/getBillRoadmapCourse`,{selectedCourseIds},{withCredentials: true})
+        return res.data.payment
+    },
+    PaymentSucces : async (paymentId: string) =>{
+        await api.post(`/student/PaymentSucces/${paymentId}`,{},{withCredentials: true})
+    },
+    PaymentSuccess2: async (paymentId: string) =>{
+        await api.post(`/student/PaymentSuccess2/${paymentId}`,{},{withCredentials: true})
+    },
+    PaymentSuccessRoadmap : async (paymentId: string)=>{
+        await api.post(`/student/PaymentSuccessRoadmap/${paymentId}`,{},{withCredentials: true})
+    },
+    getBillSingleCourse2 : async (paymentId: string)=>{
+        const res = await api.get(`/student/getBillSingleCourse2/${paymentId}`,{withCredentials: true})
+        return res.data.payment
+    },
+    postComment : async (courseId: string, content: string) =>{
+        await api.post(`/student/postComment/${courseId}`,{content},{withCredentials: true})
+    },
+    postReply : async (commentId: string, content: string) =>{
+        await api.post(`/student/postReply/${commentId}`,{content},{withCredentials: true})
+    },
+    getComment : async (courseId: string) =>{
+        const res = await api.get(`/student/getComment/${courseId}`,{withCredentials: true})
+        return res.data
+    },
+    getReply : async (commentId: string) =>{
+        const res = await api.get(`/student/getReply/${commentId}`,{withCredentials : true})
+        return res.data
+    },
 }

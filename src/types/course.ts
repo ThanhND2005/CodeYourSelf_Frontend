@@ -40,6 +40,17 @@ export interface MultipleCourse{
     teacherId: string,
     rate: number,
 }
+export interface Payment{
+    paymentId: string, 
+    createdAt: Date,
+    amount: number,
+    courseId: string ,
+    studentId: string, 
+    qrUrl: string,
+    status: string,
+    periodMonth: number,
+    periodYear: number
+}
 export interface CourseState {
     courseSearchs : CourseSearch[] | null 
     multipleCourseSearchs : MultipleCourseSearch[] | null
@@ -47,6 +58,8 @@ export interface CourseState {
     multipleCourse: MultipleCourse | null
     courses : Course[] | null
     videos : Video[]| []
+    payment: Payment | null 
+    setPayment : (payment : Payment) => void
     setCourseSearch : (courses : CourseSearch[]) => void
     setMultipleCourseSearch : (courses : MultipleCourseSearch[]) => void 
     setCourse : (course : Course) => void

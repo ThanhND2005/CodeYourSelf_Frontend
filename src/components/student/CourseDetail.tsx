@@ -8,8 +8,9 @@ import {
   Star,
   PlayCircle
 } from "lucide-react";
-import PaymentDialog from "./PaymentDialog";
 import { useCourseStore } from "@/stores/useCourseStore";
+import PaymentDialog2 from "./PaymentDialog2";
+import { StudentService } from "@/services/StudentService";
 
 
 
@@ -18,7 +19,7 @@ import { useCourseStore } from "@/stores/useCourseStore";
 
 export default function CourseDetail() {
   const [expanded, setExpanded] = useState<string[]>([]);
-  const {multipleCourse,courses} = useCourseStore()
+  const {multipleCourse,courses,setPayment} = useCourseStore()
   const toggleCourse = (id: string) => {
     setExpanded((prev) =>
       prev.includes(id)
@@ -38,7 +39,10 @@ export default function CourseDetail() {
   const formatCurrency = (amount: number) => {
     return amount === 0 ? "Miễn phí" : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
-
+  const registerClick = async () =>{ 
+    const payment = await StudentService.getBillMultipleCourse(multipleCourse?.multipleCourseId as string)
+    setPayment(payment)
+  }
   return (
     <div className="p-6">
       <h1 className="text-4xl font-bold mb-6">
@@ -139,11 +143,11 @@ export default function CourseDetail() {
             />
           </div>
 
-          <PaymentDialog>
-            <button className="w-full bg-[#851385] hover:bg-[#6a0f6a] text-white py-3 rounded-xl font-semibold mb-6 shadow-md transition-transform active:scale-95">
+          <PaymentDialog2>
+            <button className="w-full bg-[#851385] hover:bg-[#6a0f6a] text-white py-3 rounded-xl font-semibold mb-6 shadow-md transition-transform active:scale-95" onClick={() => registerClick()}>
               Đăng ký lộ trình
             </button>
-          </PaymentDialog>
+          </PaymentDialog2>
 
           <h3 className="text-2xl font-bold mb-5 text-[#851385]">
             Học phí: {formatCurrency(multipleCourse?.cost ?? 0)}

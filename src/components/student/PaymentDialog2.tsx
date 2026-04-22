@@ -3,7 +3,6 @@ import {
     DialogContent,
     DialogTrigger,
   } from "@/components/ui/dialog";
-import { useVideo } from "@/hooks/useCourses";
 import { StudentService } from "@/services/StudentService";
 import { useCourseStore } from "@/stores/useCourseStore";
 import { useTabStudentStore } from "@/stores/useTabStore";
@@ -16,11 +15,10 @@ import { useEffect } from "react";
   
 
   
-  export default function PaymentDialog({
+  export default function PaymentDialog2({
     children,
   }: PaymentDialogProps) {
-    const {course,payment} = useCourseStore()
-    const {data : videos} = useVideo()
+    const {payment,courses,multipleCourse} = useCourseStore()
     const {setTabActive} = useTabStudentStore()
     useEffect(()=>{
       if(!payment) return 
@@ -31,8 +29,8 @@ import { useEffect } from "react";
             console.log(payment.paymentId)
             const payment2 = await StudentService.getBillSingleCourse2(payment.paymentId)
             if(payment2 && payment2.status == "SUCCESS"){
-              await StudentService.PaymentSucces(payment.paymentId)
-              setTabActive('courselearning')
+              await StudentService.PaymentSuccess2(payment.paymentId)
+              setTabActive('profile')
               clearInterval(interval)
             }
           } catch (error) {
@@ -58,11 +56,11 @@ import { useEffect } from "react";
             {/* HEADER */}
             <div>
               <h2 className="text-2xl font-bold">
-                {course?.name}
+                {multipleCourse?.name}
               </h2>
   
               <p className="text-lg font-medium">
-                Thầy: {course?.teacherName}
+                Thầy: {courses ? courses[0].teacherName : 'Ẩn danh'}
               </p>
             </div>
   
@@ -73,19 +71,14 @@ import { useEffect } from "react";
               <h3 className="font-bold text-xl">
                 Tổng quan về khóa học:
               </h3>
-  
-            
-  
               <p>
                 + Tổng bài học:
                 {" "}
-                {videos?.length} video
+                {courses?.length} khóa
               </p>
   
-           
-  
               <p>
-                + Giá: {course?.cost} vnđ
+                + Giá: {multipleCourse?.cost} vnđ
               </p>
             </div>
   

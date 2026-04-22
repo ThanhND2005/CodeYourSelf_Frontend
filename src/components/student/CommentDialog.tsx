@@ -5,6 +5,8 @@ import * as z from "zod";
 import { TeacherService } from "@/services/TeacherService";
 import { useTeacherStore } from "@/stores/useTeacherStore";
 import { useStudentInfor } from "@/hooks/useAuth";
+import { useCourseStore } from "@/stores/useCourseStore";
+import { StudentService } from "@/services/StudentService";
 
 // --- SCHEMAS TÁCH BIỆT ---
 const commentSchema = z.object({
@@ -88,10 +90,10 @@ export default function CommentDialog({ open, onClose, courseId }: CommentDialog
 
   // --- HÀM XỬ LÝ: SUBMIT BÌNH LUẬN MỚI ---
   const onSubmitComment = async (data: CommentFormValues) => {
-    const userId = useTeacherStore.getState().teacher?.userId as string
-    const courseId1 = useTeacherStore.getState().course?.courseId as string
+    
+    const courseId1 = useCourseStore.getState().course?.courseId as string
     try {
-      await TeacherService.postComment(courseId1,userId,data.content)
+      await StudentService.postComment(courseId1,data.content)
       const {comments : comments1} = await TeacherService.getComment(courseId1)
       setComment(comments1)
     } catch (error) {
@@ -105,14 +107,14 @@ export default function CommentDialog({ open, onClose, courseId }: CommentDialog
   // --- HÀM XỬ LÝ: SUBMIT PHẢN HỒI MỚI ---
   const onSubmitReply = async (data: ReplyFormValues) => {
     if (!activeReplyId) return;
-    const userId = useTeacherStore.getState().teacher?.userId as string
+    
     try {
-      await TeacherService.postReply(activeReplyId, userId,data.content)
+      await StudentService.postReply(activeReplyId,data.content)
       const {replies : replies3} = await TeacherService.getReply(activeReplyId)
       console.log(replies3)
       setRepliesMap((prev) => ({
         ...prev,
-        [activeReplyId]: replies3, // 👈 Sửa dòng này (xóa phần dấu ba chấm đi)
+        [activeReplyId]: replies3, 
       }));
     } catch (error) {
       console.error(error)

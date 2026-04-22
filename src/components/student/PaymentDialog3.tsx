@@ -3,7 +3,6 @@ import {
     DialogContent,
     DialogTrigger,
   } from "@/components/ui/dialog";
-import { useVideo } from "@/hooks/useCourses";
 import { StudentService } from "@/services/StudentService";
 import { useCourseStore } from "@/stores/useCourseStore";
 import { useTabStudentStore } from "@/stores/useTabStore";
@@ -16,11 +15,10 @@ import { useEffect } from "react";
   
 
   
-  export default function PaymentDialog({
+  export default function PaymentDialog3({
     children,
   }: PaymentDialogProps) {
-    const {course,payment} = useCourseStore()
-    const {data : videos} = useVideo()
+    const {payment} = useCourseStore()
     const {setTabActive} = useTabStudentStore()
     useEffect(()=>{
       if(!payment) return 
@@ -31,8 +29,8 @@ import { useEffect } from "react";
             console.log(payment.paymentId)
             const payment2 = await StudentService.getBillSingleCourse2(payment.paymentId)
             if(payment2 && payment2.status == "SUCCESS"){
-              await StudentService.PaymentSucces(payment.paymentId)
-              setTabActive('courselearning')
+              await StudentService.PaymentSuccessRoadmap(payment.paymentId)
+              setTabActive('profile')
               clearInterval(interval)
             }
           } catch (error) {
@@ -58,11 +56,11 @@ import { useEffect } from "react";
             {/* HEADER */}
             <div>
               <h2 className="text-2xl font-bold">
-                {course?.name}
+                Khóa học tự xây dựng
               </h2>
   
               <p className="text-lg font-medium">
-                Thầy: {course?.teacherName}
+                Bao gồm nhiều giáo viên
               </p>
             </div>
   
@@ -76,16 +74,10 @@ import { useEffect } from "react";
   
             
   
-              <p>
-                + Tổng bài học:
-                {" "}
-                {videos?.length} video
-              </p>
-  
            
   
               <p>
-                + Giá: {course?.cost} vnđ
+                + Giá: {payment?.amount} vnđ
               </p>
             </div>
   

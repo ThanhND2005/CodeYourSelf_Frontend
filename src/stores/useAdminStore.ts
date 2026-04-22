@@ -1,4 +1,5 @@
-import {type adminState, type Course, type DashboardNotificationDTO, type Notification, type Payment, type Salary, type Student, type Teacher, type WaitCourse } from "@/types/admin";
+import {type adminState, type Course, type DashboardNotificationDTO, type Notification, type Salary, type Student, type Teacher, type WaitCourse } from "@/types/admin";
+import type { Payment } from "@/types/course";
 
 import { create } from "zustand";
 
