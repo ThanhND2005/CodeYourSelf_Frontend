@@ -106,5 +106,9 @@ export const TeacherService = {
     },
     patchTeacher : async (teacherId : string, name: string, dob: Date,address: string, phone: string, gender:string)=>{
         await api.patch(`/teacher/patchTeacher/${teacherId}`,{name, dob,address,phone, gender},{withCredentials: true})
+    },
+    getNotificationCourse : async() =>{
+        const res = await api.get(`/teacher/getNotificationCourse`,{withCredentials: true})
+        return res.data.notifications1
     }
 }
