@@ -32,8 +32,6 @@ export default function CourseLearning() {
   const videoRef = useRef<HTMLVideoElement>(null);
   
   const [activeVideo, setActiveVideo] = useState<any>(null); 
-  
-  
   const [progressData, setProgressData] = useState<any[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
 

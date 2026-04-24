@@ -3,44 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { Users, Library, Layers, BookOpen } from 'lucide-react';
 import { useTeacherStore } from '@/stores/useTeacherStore';
 import { useTabTeacherStore } from '@/stores/useTabStore';
+import { useNotificationCourse } from '@/hooks/useTeacher';
 
 
 
-// Tuân thủ bảng Notification
-interface CourseNotification {
-  notificationId: string;
-  title: string;
-  content: string;
-  createdAt: string; // datetime
-  deleted: number;
-  // TRƯỜNG THÊM: Để hiển thị "Học sinh vừa đăng ký", cần join lấy thông tin học sinh
-  studentName?: string;
-  studentAvatar?: string;
-}
-
-// ==========================================
-// 2. MOCK DATA
-// ==========================================
-
-
-
-// ==========================================
-// 3. MAIN COMPONENT
-// ==========================================
 
 export default function TeacherDashboardContent() {
   // --- STATES ---
   
-  const [notifications, setNotifications] = useState<CourseNotification[]>([]);
-  // const [stats, setStats] = useState({ totalStudents: 0, totalCourses: 0 });
+  const {data : notifications} = useNotificationCourse()
 
-  // --- API CALL PLACEHOLDERS ---
-  
-
-  // --- HANDLERS ---
-  const handleEditCourse = (id: string, isMultiple: boolean) => {
-    console.log(`Edit ${isMultiple ? 'MultipleCourse' : 'SingleCourse'} with ID:`, id);
-  };
 
   // --- EFFECTS ---
   const {setTabActive} = useTabTeacherStore()
@@ -161,22 +133,20 @@ export default function TeacherDashboardContent() {
           <h2 className="text-xl font-bold text-gray-800 mb-4">Thông báo học viên mới</h2>
           <div className="bg-[#FFD1E3] rounded-3xl p-6 shadow-sm border border-pink-100 h-full max-h-[800px] overflow-y-auto">
             <div className="space-y-4">
-              {notifications.length === 0 ? (
+              {notifications?.length === 0 ? (
                 <p className="text-center text-gray-500 py-10 bg-white/50 rounded-xl">Chưa có thông báo mới.</p>
               ) : (
-                notifications.map((noti) => (
+                notifications?.map((noti) => (
                   <div key={noti.notificationId} className="bg-white p-4 rounded-xl shadow-sm flex items-start gap-4">
                     <img 
-                      src={noti.studentAvatar} 
+                      src={noti.avatarUrl} 
                       alt={noti.studentName} 
                       className="w-12 h-12 rounded-full object-cover border-2 border-pink-200"
                     />
                     <div className="flex-1">
-                      <h4 className="font-bold text-gray-800 text-sm">{noti.studentName}</h4>
+              
                       <p className="text-xs text-gray-500 mt-0.5">{noti.title}</p>
-                      <p className="text-sm text-gray-700 mt-1.5 font-medium bg-pink-50 p-2 rounded-lg">
-                        {noti.content}
-                      </p>
+                     
                       <p className="text-xs text-gray-400 mt-2">
                         {new Date(noti.createdAt).toLocaleDateString('vi-VN', { hour: '2-digit', minute:'2-digit' })}
                       </p>

@@ -22,14 +22,14 @@ export const useVideo = () =>{
     return useQuery({
         queryKey : ['course','videos'],
         queryFn : () => StudentService.getCoursePaid(useCourseStore.getState().course?.courseId as string),
-        staleTime : 0
+        staleTime : -1
     })
 }
 export const useLessonProgress = () =>{
     return useQuery({
         queryKey : ['course','lessonProgress'],
         queryFn : () => StudentService.getLessonProgress(useCourseStore.getState().course?.courseId as string),
-        staleTime : Infinity
+        staleTime : -1
     })
 }
 export const useMultipleCourse = () =>{
