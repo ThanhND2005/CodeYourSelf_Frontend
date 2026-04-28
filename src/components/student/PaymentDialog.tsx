@@ -38,7 +38,7 @@ import { useEffect } from "react";
           } catch (error) {
             console.error(error)
           }
-        },3000)
+        },5000)
       }
       return () => {
         if(interval) { 

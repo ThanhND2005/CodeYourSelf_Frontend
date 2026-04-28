@@ -126,4 +126,13 @@ export const StudentService = {
         const res = await api.get(`/student/getReply/${commentId}`,{withCredentials : true})
         return res.data
     },
+    
+    updateScore : async (videoId: string, score: number) => {
+        await api.patch(`/student/updateScore`, { videoId, score }, { withCredentials: true })
+    },
+  
+    getQuestionsByVideo : async (videoId: string) => {
+        const res = await api.get(`/student/getQuestions/${videoId}`, { withCredentials: true })
+        return res.data.questions 
+    },
 }

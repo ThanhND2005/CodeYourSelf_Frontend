@@ -62,6 +62,8 @@ export default function HomePageAdmin() {
     setTabActive("courses");
     const {waitCourses} = await AdminServices.getWaitCourses()
     const {waitMultipleCourses} = await AdminServices.getWaitMultipleCourses()
+    console.log(waitCourses)
+    console.log(waitMultipleCourses)
     setWaitCourses(waitCourses)
     setWaitMultipleCourse(waitMultipleCourses)
   };

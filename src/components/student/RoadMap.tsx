@@ -42,7 +42,7 @@ const ROADMAPS: Roadmap[] = [
     steps: [
       { id: "step_html", title: "HTML", icon: FileCode2, searchKeyword: "html" },
       { id: "step_css", title: "CSS", icon: LayoutTemplate, searchKeyword: "css" },
-      { id: "step_js", title: "Backend Language", icon: Code, searchKeyword: "nodejs" }, 
+      { id: "step_js", title: "Backend Language", icon: Code, searchKeyword: "node.js" }, 
       { id: "step_git", title: "GIT", icon: GitBranch, searchKeyword: "git" },
       { id: "step_db", title: "Database", icon: Database, searchKeyword: "sql" },
       { id: "step_fw", title: "Framework", icon: Code, searchKeyword: "nestjs" }, 

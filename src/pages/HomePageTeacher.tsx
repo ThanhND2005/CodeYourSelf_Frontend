@@ -59,7 +59,7 @@ export default function HomePageTeacher() {
     try {
       await signout();
       setTabActive("dashboard");
-      navigate("/signin");
+      navigate("/signin/teacher");
     } catch (error) {
       console.error(error);
     }

@@ -59,7 +59,7 @@ export default function SigninPage({
   return (
     <div
       className={cn(
-        "min-h-screen w-full flex items-start justify-center pt-16",
+        "min-h-screen w-full flex items-start justify-center pt-10",
         className
       )}
       style={{
@@ -78,8 +78,8 @@ export default function SigninPage({
         />
 
         {/* TITLE */}
-        <h1 className="text-[56px] md:text-[72px] font-semibold text-center mb-10 text-[#851385] leading-tight">
-          Đăng nhập vào
+        <h1 className="text-[56px] md:text-[72px] font-semibold text-center mb-5 text-[#851385] leading-tight">
+          Đăng nhập 
           <br />
           Code YourSelf
         </h1>
@@ -87,7 +87,7 @@ export default function SigninPage({
         {/* FORM */}
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col gap-5 w-full"
+          className="flex flex-col w-full"
         >
           {/* USERNAME */}
           <div className="flex flex-col gap-2">
@@ -137,9 +137,9 @@ export default function SigninPage({
         {/* REGISTER */}
         <p className="mt-6 text-sm text-center">
           Bạn chưa có tài khoản?{" "}
-          <span className="text-[#851385] font-semibold cursor-pointer">
+          <a href="/signup" className="text-[#851385] font-semibold cursor-pointer">
             Đăng ký
-          </span>
+          </a>
         </p>
       </div>
     </div>
