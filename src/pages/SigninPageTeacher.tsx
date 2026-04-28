@@ -60,7 +60,7 @@ export default function SigninPageTeacher({
   return (
     <div
       className={cn(
-        "min-h-screen w-full flex items-start justify-center pt-16",
+        "min-h-screen w-full flex items-start justify-center pt-10",
         className
       )}
       style={{
@@ -80,7 +80,7 @@ export default function SigninPageTeacher({
 
         {/* TITLE */}
         <h1 className="text-[56px] md:text-[72px] font-semibold text-center mb-10 text-[#851385] leading-tight">
-          Đăng nhập vào
+          Đăng nhập
           <br />
           Code YourSelf
         </h1>
@@ -138,9 +138,9 @@ export default function SigninPageTeacher({
         {/* REGISTER */}
         <p className="mt-6 text-sm text-center">
           Bạn chưa có tài khoản?{" "}
-          <span className="text-[#851385] font-semibold cursor-pointer">
+          <a href="/signup" className="text-[#851385] font-semibold cursor-pointer">
             Đăng ký
-          </span>
+          </a>
         </p>
       </div>
     </div>

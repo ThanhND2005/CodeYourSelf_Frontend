@@ -25,6 +25,7 @@ export const useVideo = () =>{
         staleTime : -1
     })
 }
+
 export const useLessonProgress = () =>{
     return useQuery({
         queryKey : ['course','lessonProgress'],

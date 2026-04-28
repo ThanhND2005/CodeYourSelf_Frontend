@@ -110,5 +110,8 @@ export const TeacherService = {
     getNotificationCourse : async() =>{
         const res = await api.get(`/teacher/getNotificationCourse`,{withCredentials: true})
         return res.data.notifications1
+    },
+    postQuestion : async (videoId : string,content: string,optionA: string,optionB: string,optionC: string,optionD: string,correctAnswer:string,timestamp:number)=>{
+        await api.post(`/teacher/postQuestion`,{videoId,content,optionA,optionB,optionC,optionD,correctAnswer,timestamp},{withCredentials: true})
     }
 }

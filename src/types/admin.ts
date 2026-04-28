@@ -38,7 +38,8 @@ export interface WaitCourse{
   summary: string,
   teacherId: string,
   teacherName: string,
-  imageUrl: string
+  imageUrl: string,
+  status: string
 }
 export interface DashboardNotificationDTO {
   id: string;              

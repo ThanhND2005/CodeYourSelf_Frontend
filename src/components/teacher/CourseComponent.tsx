@@ -14,6 +14,7 @@ import {
   Image as ImageIcon,
   Upload,
   Film,
+  HelpCircle,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -85,6 +86,30 @@ const imageUploadSchema = z.object({
     ),
 });
 
+// Schema thêm câu hỏi vào video (theo DB: questionId, videoId, content, optionA-D, correctAnswer, timestamp)
+const questionSchema = z.object({
+  content: z.string().min(5, "Nội dung câu hỏi ít nhất 5 ký tự"),
+  optionA: z.string().min(1, "Không được để trống"),
+  optionB: z.string().min(1, "Không được để trống"),
+  optionC: z.string().min(1, "Không được để trống"),
+  optionD: z.string().min(1, "Không được để trống"),
+  correctAnswer: z.enum(["A", "B", "C", "D"], { required_error: "Chọn đáp án đúng" }),
+  timestamp: z.coerce.number().min(0, "Thời điểm không được âm"),
+});
+
+type QuestionFormData = z.infer<typeof questionSchema>;
+
+interface Question {
+  videoId: string;
+  content: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+  correctAnswer: string;
+  timestamp: number;
+}
+
 type CourseFormData = z.infer<typeof multipleCourseschema>;
 type ImageUploadFormData = z.infer<typeof imageUploadSchema>;
 type VideoUploadFormData = z.infer<typeof videoUploadSchema>;
@@ -107,6 +132,9 @@ export default function CourseManagementComponent() {
   const [isSingleDialogOpen, setIsSingleDialogOpen] = useState(false);
   const [isMultiDialogOpen, setIsMultiDialogOpen] = useState(false);
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
+  const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
+  const [targetVideoForQuestion, setTargetVideoForQuestion] = useState<{ videoId: string; videoName: string } | null>(null);
+  const [questionsByVideo, setQuestionsByVideo] = useState<Record<string, Question[]>>({});
 
   const [editingSingleCourse, setEditingSingleCourse] = useState<SingleCourse | null>(null);
   const [editingMultiCourse, setEditingMultiCourse] = useState<MultipleCourse | null>(null);
@@ -128,6 +156,7 @@ export default function CourseManagementComponent() {
   const editMultiForm = useForm<CourseFormData>({ resolver: zodResolver(multipleCourseschema) });
   const videoForm = useForm<VideoUploadFormData>({ resolver: zodResolver(videoUploadSchema) });
   const imageForm = useForm<ImageUploadFormData>({ resolver: zodResolver(imageUploadSchema) });
+  const questionForm = useForm<QuestionFormData>({ resolver: zodResolver(questionSchema) });
 
   // --- HANDLERS XÓA / XEM CHI TIẾT ---
   const handleDeleteSingleCourse = async (courseId: string) => {
@@ -319,6 +348,39 @@ export default function CourseManagementComponent() {
     }
   };
 
+  const handleOpenQuestionDialog = (video: Video) => {
+    setTargetVideoForQuestion({ videoId: video.videoId, videoName: video.name });
+    questionForm.reset({ content: "", optionA: "", optionB: "", optionC: "", optionD: "", correctAnswer: "A", timestamp: 0 });
+    setIsQuestionDialogOpen(true);
+  };
+
+  // TODO: Viết logic gọi API thêm câu hỏi
+  const onSubmitQuestion = async (data: QuestionFormData) => {
+    if (!targetVideoForQuestion) return;
+    try {
+      const newQuestion: Question = {
+        videoId: targetVideoForQuestion.videoId,
+        content: data.content,
+        optionA: data.optionA,
+        optionB: data.optionB,
+        optionC: data.optionC,
+        optionD: data.optionD,
+        correctAnswer: data.correctAnswer,
+        timestamp: data.timestamp,
+      };
+      await TeacherService.postQuestion(newQuestion.videoId,newQuestion.content,newQuestion.optionA,newQuestion.optionB,newQuestion.optionC,newQuestion.optionD,newQuestion.correctAnswer,newQuestion.timestamp)
+      setQuestionsByVideo((prev) => ({
+        ...prev,
+        [targetVideoForQuestion.videoId]: [...(prev[targetVideoForQuestion.videoId] ?? []), newQuestion],
+      }));
+      setIsQuestionDialogOpen(false);
+      questionForm.reset();
+      
+    } catch (error) {
+      console.error(error)
+    }
+  };
+
   return (
     <div className="w-full h-full p-8 font-sans text-gray-800">
       {/* FORM ẨN CHO TÍNH NĂNG UPLOAD ẢNH */}
@@ -381,82 +443,73 @@ export default function CourseManagementComponent() {
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-pink-800">
           <Layers size={24} /> Khóa học Combo
         </h2>
-        <div className="bg-white/50 backdrop-blur-md rounded-3xl p-6 shadow-sm border border-white/60 space-y-4">
-          {multipleCourses?.map((multi) => {
-            const includedCount = multipleCourses.filter(
-              (c) => c.multipleCourseId === multi.multipleCourseId,
-            ).length;
-            return (
-              <div
-                key={multi.multipleCourseId}
-                className="flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm border-l-4 border-l-pink-500 hover:shadow-md transition-all"
-              >
-                <div className="flex items-center gap-4 flex-1">
-                  <div
-                    onClick={() => triggerImageUpload(multi.multipleCourseId, "combo")}
-                    className={`relative w-20 h-20 bg-pink-50 rounded-xl overflow-hidden cursor-pointer group shrink-0 border border-pink-100 ${isLoadingProcess && targetImageUpload?.id === multi.multipleCourseId ? "opacity-50" : ""}`}
-                    title="Bấm để đổi ảnh"
-                  >
-                    {multi.imageUrl ? (
-                      <img src={multi.imageUrl} alt={multi.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-pink-300">
-                        <BookOpen size={28} />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center text-white backdrop-blur-[1px] transition-all">
-                      <Camera size={24} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* COMBO ĐÃ DUYỆT */}
+          <div>
+            <h3 className="text-sm font-semibold text-green-700 mb-2 flex items-center gap-1">
+              <CheckCircle size={14} /> Đã duyệt ({multipleCourses?.filter(m => m.status === "Đã duyệt").length || 0})
+            </h3>
+            <div className="bg-white/50 backdrop-blur-md rounded-2xl p-4 shadow-sm border border-white/60 space-y-3 max-h-80 overflow-y-auto">
+              {multipleCourses?.filter(m => m.status === "Đã duyệt").length === 0 && (
+                <p className="text-gray-400 text-sm italic">Chưa có combo nào được duyệt.</p>
+              )}
+              {multipleCourses?.filter(m => m.status === "Đã duyệt").map((multi) => (
+                <div key={multi.multipleCourseId} className="flex items-center justify-between p-3 bg-white rounded-xl shadow-sm border-l-4 border-l-green-400 hover:shadow-md transition-all">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div onClick={() => triggerImageUpload(multi.multipleCourseId, "combo")} className="relative w-14 h-14 bg-pink-50 rounded-lg overflow-hidden cursor-pointer group shrink-0 border border-pink-100" title="Đổi ảnh">
+                      {multi.imageUrl ? <img src={multi.imageUrl} alt={multi.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-pink-300"><BookOpen size={20} /></div>}
+                      <div className="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center text-white"><Camera size={16} /></div>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm text-gray-800 truncate">{multi.name}</p>
+                      <p className="text-xs text-pink-700">{multi.cost.toLocaleString("vi-VN")} VNĐ</p>
                     </div>
                   </div>
-
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-800">{multi.name}</h3>
-                    <p className="text-sm text-gray-500 line-clamp-1">{multi.summary}</p>
-                    <div className="flex items-center gap-3 mt-1 text-xs font-medium">
-                      <span className="text-pink-700 bg-pink-50 px-2 py-1 rounded-md">
-                        {multi.cost.toLocaleString("vi-VN")} VNĐ
-                      </span>
-                      <span className="text-purple-700 bg-purple-50 px-2 py-1 rounded-md">
-                        Bao gồm {includedCount} khóa
-                      </span>
-                      <span
-                        className={`px-2 py-1 rounded-md ${multi.status === "Đã duyệt" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}
-                      >
-                        {multi.status || "Chưa duyệt"}
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-2 ml-2 shrink-0">
+                    <button onClick={() => handleViewMultiDetails(multi)} className="flex items-center gap-1 bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                      <BookOpen size={14} /> Xem
+                    </button>
+                    <button onClick={() => handleDeleteMultiCourse(multi.multipleCourseId)} className="flex items-center gap-1 bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                      <Trash2 size={14} /> Xóa
+                    </button>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-3 ml-4 shrink-0">
-                  {/* LOGIC ĐIỀU KIỆN CHO NÚT SỬA / XEM CHI TIẾT */}
-                  {multi.status === "Đã duyệt" ? (
-                    <button
-                      onClick={() => handleViewMultiDetails(multi)}
-                      className="flex items-center gap-2 bg-blue-100 text-blue-700 hover:bg-blue-200 px-4 py-2 rounded-xl font-medium transition-colors"
-                    >
-                      <BookOpen size={18} /> Xem chi tiết
+              ))}
+            </div>
+          </div>
+          {/* COMBO CHƯA DUYỆT */}
+          <div>
+            <h3 className="text-sm font-semibold text-orange-600 mb-2 flex items-center gap-1">
+              <Film size={14} /> Chưa duyệt ({multipleCourses?.filter(m => m.status !== "Đã duyệt").length || 0})
+            </h3>
+            <div className="bg-white/50 backdrop-blur-md rounded-2xl p-4 shadow-sm border border-white/60 space-y-3 max-h-80 overflow-y-auto">
+              {multipleCourses?.filter(m => m.status !== "Đã duyệt").length === 0 && (
+                <p className="text-gray-400 text-sm italic">Không có combo nào đang chờ duyệt.</p>
+              )}
+              {multipleCourses?.filter(m => m.status !== "Đã duyệt").map((multi) => (
+                <div key={multi.multipleCourseId} className="flex items-center justify-between p-3 bg-white rounded-xl shadow-sm border-l-4 border-l-orange-400 hover:shadow-md transition-all">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div onClick={() => triggerImageUpload(multi.multipleCourseId, "combo")} className="relative w-14 h-14 bg-pink-50 rounded-lg overflow-hidden cursor-pointer group shrink-0 border border-pink-100" title="Đổi ảnh">
+                      {multi.imageUrl ? <img src={multi.imageUrl} alt={multi.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-pink-300"><BookOpen size={20} /></div>}
+                      <div className="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center text-white"><Camera size={16} /></div>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm text-gray-800 truncate">{multi.name}</p>
+                      <p className="text-xs text-orange-600">{multi.cost.toLocaleString("vi-VN")} VNĐ</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-2 shrink-0">
+                    <button onClick={() => handleOpenEditMulti(multi)} className="flex items-center gap-1 bg-pink-100 text-pink-700 hover:bg-pink-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                      <Edit size={14} /> Sửa
                     </button>
-                  ) : (
-                    <button
-                      onClick={() => handleOpenEditMulti(multi)}
-                      className="flex items-center gap-2 bg-pink-100 text-pink-700 hover:bg-pink-200 px-4 py-2 rounded-xl font-medium transition-colors"
-                    >
-                      <Edit size={18} /> Sửa & Khóa con
+                    <button onClick={() => handleDeleteMultiCourse(multi.multipleCourseId)} className="flex items-center gap-1 bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                      <Trash2 size={14} /> Xóa
                     </button>
-                  )}
-
-                  {/* NÚT XÓA COMBO */}
-                  <button
-                    onClick={() => handleDeleteMultiCourse(multi.multipleCourseId)}
-                    className="flex items-center gap-2 bg-red-100 text-red-700 hover:bg-red-200 px-4 py-2 rounded-xl font-medium transition-colors"
-                  >
-                    <Trash2 size={18} /> Xóa
-                  </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -465,79 +518,74 @@ export default function CourseManagementComponent() {
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-purple-800">
           <BookOpen size={24} /> Khóa học Đơn lẻ
         </h2>
-        <div className="bg-white/50 backdrop-blur-md rounded-3xl p-6 shadow-sm border border-white/60 space-y-4">
-          {singleCourses?.map((course) => (
-            <div
-              key={course.courseId}
-              className="flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm border-l-4 border-l-purple-500 hover:shadow-md transition-all"
-            >
-              <div className="flex items-center gap-4 flex-1">
-                <div
-                  onClick={() => triggerImageUpload(course.courseId, "single")}
-                  className={`relative w-20 h-20 bg-purple-50 rounded-xl overflow-hidden cursor-pointer group shrink-0 border border-purple-100 ${isLoadingProcess && targetImageUpload?.id === course.courseId ? "opacity-50" : ""}`}
-                  title="Bấm để đổi ảnh"
-                >
-                  {course.imageUrl ? (
-                    <img src={course.imageUrl} alt={course.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-purple-300">
-                      <ImageIcon size={28} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* KHÓA ĐƠN ĐÃ DUYỆT */}
+          <div>
+            <h3 className="text-sm font-semibold text-green-700 mb-2 flex items-center gap-1">
+              <CheckCircle size={14} /> Đã duyệt ({singleCourses?.filter(c => c.status === "Đã duyệt").length || 0})
+            </h3>
+            <div className="bg-white/50 backdrop-blur-md rounded-2xl p-4 shadow-sm border border-white/60 space-y-3 max-h-80 overflow-y-auto">
+              {singleCourses?.filter(c => c.status === "Đã duyệt").length === 0 && (
+                <p className="text-gray-400 text-sm italic">Chưa có khóa nào được duyệt.</p>
+              )}
+              {singleCourses?.filter(c => c.status === "Đã duyệt").map((course) => (
+                <div key={course.courseId} className="flex items-center justify-between p-3 bg-white rounded-xl shadow-sm border-l-4 border-l-green-400 hover:shadow-md transition-all">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div onClick={() => triggerImageUpload(course.courseId, "single")} className="relative w-14 h-14 bg-purple-50 rounded-lg overflow-hidden cursor-pointer group shrink-0 border border-purple-100" title="Đổi ảnh">
+                      {course.imageUrl ? <img src={course.imageUrl} alt={course.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-purple-300"><ImageIcon size={20} /></div>}
+                      <div className="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center text-white"><Camera size={16} /></div>
                     </div>
-                  )}
-                  <div className="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center text-white backdrop-blur-[1px] transition-all">
-                    <Camera size={24} />
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm text-gray-800 truncate">{course.name}</p>
+                      <p className="text-xs text-purple-700">{course.cost.toLocaleString("vi-VN")} VNĐ</p>
+                      {course.multipleCourseId && <span className="text-xs text-gray-500 flex items-center gap-0.5"><CheckCircle size={10} /> Thuộc Combo</span>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-2 shrink-0">
+                    <button onClick={() => handleViewSingleDetails(course)} className="flex items-center gap-1 bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                      <BookOpen size={14} /> Xem
+                    </button>
+                    <button onClick={() => handleDeleteSingleCourse(course.courseId)} className="flex items-center gap-1 bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                      <Trash2 size={14} /> Xóa
+                    </button>
                   </div>
                 </div>
-
-                <div>
-                  <h3 className="text-lg font-bold text-gray-800">{course.name}</h3>
-                  <p className="text-sm text-gray-500 line-clamp-1">{course.summary}</p>
-                  <div className="flex items-center gap-3 mt-1 text-xs font-medium">
-                    <span className="text-purple-700 bg-purple-50 px-2 py-1 rounded-md">
-                      {course.cost.toLocaleString("vi-VN")} VNĐ
-                    </span>
-                    <span
-                      className={`px-2 py-1 rounded-md ${course.status === "Đã duyệt" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}
-                    >
-                      {course.status}
-                    </span>
-                    {course.multipleCourseId && (
-                      <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md flex items-center gap-1">
-                        <CheckCircle size={12} /> Thuộc 1 Combo
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 ml-4 shrink-0">
-                {/* LOGIC ĐIỀU KIỆN CHO NÚT SỬA / XEM CHI TIẾT */}
-                {course.status === "Đã duyệt" ? (
-                  <button
-                    onClick={() => handleViewSingleDetails(course)}
-                    className="flex items-center gap-2 bg-blue-100 text-blue-700 hover:bg-blue-200 px-4 py-2 rounded-xl font-medium transition-colors"
-                  >
-                    <BookOpen size={18} /> Xem chi tiết
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleOpenEditSingle(course)}
-                    className="flex items-center gap-2 bg-purple-100 text-purple-700 hover:bg-purple-200 px-4 py-2 rounded-xl font-medium transition-colors"
-                  >
-                    <Edit size={18} /> Sửa thông tin & Video
-                  </button>
-                )}
-
-                {/* NÚT XÓA KHÓA ĐƠN */}
-                <button
-                  onClick={() => handleDeleteSingleCourse(course.courseId)}
-                  className="flex items-center gap-2 bg-red-100 text-red-700 hover:bg-red-200 px-4 py-2 rounded-xl font-medium transition-colors"
-                >
-                  <Trash2 size={18} /> Xóa
-                </button>
-              </div>
+              ))}
             </div>
-          ))}
+          </div>
+          {/* KHÓA ĐƠN CHƯA DUYỆT */}
+          <div>
+            <h3 className="text-sm font-semibold text-orange-600 mb-2 flex items-center gap-1">
+              <Film size={14} /> Chưa duyệt ({singleCourses?.filter(c => c.status !== "Đã duyệt").length || 0})
+            </h3>
+            <div className="bg-white/50 backdrop-blur-md rounded-2xl p-4 shadow-sm border border-white/60 space-y-3 max-h-80 overflow-y-auto">
+              {singleCourses?.filter(c => c.status !== "Đã duyệt").length === 0 && (
+                <p className="text-gray-400 text-sm italic">Không có khóa nào đang chờ duyệt.</p>
+              )}
+              {singleCourses?.filter(c => c.status !== "Đã duyệt").map((course) => (
+                <div key={course.courseId} className="flex items-center justify-between p-3 bg-white rounded-xl shadow-sm border-l-4 border-l-orange-400 hover:shadow-md transition-all">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div onClick={() => triggerImageUpload(course.courseId, "single")} className="relative w-14 h-14 bg-purple-50 rounded-lg overflow-hidden cursor-pointer group shrink-0 border border-purple-100" title="Đổi ảnh">
+                      {course.imageUrl ? <img src={course.imageUrl} alt={course.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-purple-300"><ImageIcon size={20} /></div>}
+                      <div className="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center text-white"><Camera size={16} /></div>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm text-gray-800 truncate">{course.name}</p>
+                      <p className="text-xs text-orange-600">{course.cost.toLocaleString("vi-VN")} VNĐ</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-2 shrink-0">
+                    <button onClick={() => handleOpenEditSingle(course)} className="flex items-center gap-1 bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                      <Edit size={14} /> Sửa & Video
+                    </button>
+                    <button onClick={() => handleDeleteSingleCourse(course.courseId)} className="flex items-center gap-1 bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                      <Trash2 size={14} /> Xóa
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -609,6 +657,102 @@ export default function CourseManagementComponent() {
                     ${isLoadingProcess ? "bg-purple-400 cursor-not-allowed" : "bg-purple-700 hover:bg-purple-800"}`}
                 >
                   {isLoadingProcess ? <span>Đang tải lên và xử lý...</span> : <><Plus size={20} /> Thêm Video</>}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* DIALOG THÊM CÂU HỎI VÀO VIDEO */}
+      {isQuestionDialogOpen && targetVideoForQuestion && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg p-6 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => { setIsQuestionDialogOpen(false); questionForm.reset(); }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
+            >
+              <X />
+            </button>
+            <h2 className="text-xl font-bold mb-1 flex items-center gap-2 text-indigo-800">
+              <HelpCircle size={22} /> Thêm câu hỏi
+            </h2>
+            <p className="text-sm text-gray-500 mb-5">
+              Video: <span className="font-semibold text-gray-700">{targetVideoForQuestion.videoName}</span>
+            </p>
+
+            <form onSubmit={questionForm.handleSubmit(onSubmitQuestion)} className="space-y-4">
+              {/* Nội dung câu hỏi */}
+              <div>
+                <label className="text-sm font-semibold text-gray-700">Nội dung câu hỏi</label>
+                <textarea
+                  rows={2}
+                  placeholder="Ví dụ: Biến trong JavaScript được khai báo bằng từ khóa nào?"
+                  {...questionForm.register("content")}
+                  className="w-full border border-gray-300 rounded-xl p-3 mt-1 focus:outline-indigo-500 focus:ring-2 focus:ring-indigo-200 resize-none"
+                />
+                {questionForm.formState.errors.content && (
+                  <p className="text-red-500 text-xs mt-1">{questionForm.formState.errors.content.message}</p>
+                )}
+              </div>
+
+              {/* 4 đáp án */}
+              <div className="grid grid-cols-2 gap-3">
+                {(["A", "B", "C", "D"] as const).map((opt) => (
+                  <div key={opt}>
+                    <label className="text-xs font-semibold text-gray-600">Đáp án {opt}</label>
+                    <input
+                      placeholder={`Đáp án ${opt}`}
+                      {...questionForm.register(`option${opt}` as "optionA" | "optionB" | "optionC" | "optionD")}
+                      className="w-full border border-gray-300 rounded-lg p-2 mt-1 text-sm focus:outline-indigo-500"
+                    />
+                    {questionForm.formState.errors[`option${opt}` as "optionA" | "optionB" | "optionC" | "optionD"] && (
+                      <p className="text-red-500 text-xs mt-0.5">
+                        {questionForm.formState.errors[`option${opt}` as "optionA" | "optionB" | "optionC" | "optionD"]?.message}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Đáp án đúng */}
+              <div>
+                <label className="text-sm font-semibold text-gray-700">Đáp án đúng</label>
+                <select
+                  {...questionForm.register("correctAnswer")}
+                  className="w-full border border-gray-300 rounded-lg p-2 mt-1 focus:outline-indigo-500"
+                >
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="C">C</option>
+                  <option value="D">D</option>
+                </select>
+                {questionForm.formState.errors.correctAnswer && (
+                  <p className="text-red-500 text-xs mt-1">{questionForm.formState.errors.correctAnswer.message}</p>
+                )}
+              </div>
+
+              {/* Thời điểm xuất hiện (giây) */}
+              <div>
+                <label className="text-sm font-semibold text-gray-700">Thời điểm xuất hiện (giây)</label>
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="Ví dụ: 120"
+                  {...questionForm.register("timestamp")}
+                  className="w-full border border-gray-300 rounded-lg p-2 mt-1 focus:outline-indigo-500"
+                />
+                {questionForm.formState.errors.timestamp && (
+                  <p className="text-red-500 text-xs mt-1">{questionForm.formState.errors.timestamp.message}</p>
+                )}
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-medium shadow-md transition-all flex items-center justify-center gap-2"
+                >
+                  <Plus size={18} /> Thêm câu hỏi
                 </button>
               </div>
             </form>
@@ -773,12 +917,24 @@ export default function CourseManagementComponent() {
                     <p className="text-gray-400 text-sm italic">Chưa có video bài giảng nào.</p>
                   )}
                   {courseVideos.map((video) => (
-                    <div key={video.videoId} className="flex flex-col gap-1 p-3 bg-gray-50 border rounded-xl hover:bg-gray-100 transition">
+                    <div key={video.videoId} className="flex flex-col gap-2 p-3 bg-gray-50 border rounded-xl hover:bg-gray-100 transition">
                       <div className="flex items-center gap-3">
                         <PlaySquare size={20} className="text-purple-500 shrink-0" />
                         <div className="flex-1">
                           <p className="text-sm font-bold text-gray-800">{video.name}</p>
+                          {(questionsByVideo[video.videoId]?.length ?? 0) > 0 && (
+                            <p className="text-xs text-indigo-600 mt-0.5 flex items-center gap-1">
+                              <HelpCircle size={11} />
+                              {questionsByVideo[video.videoId].length} câu hỏi
+                            </p>
+                          )}
                         </div>
+                        <button
+                          onClick={() => handleOpenQuestionDialog(video)}
+                          className="flex items-center gap-1 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors shrink-0"
+                        >
+                          <HelpCircle size={13} /> Thêm câu hỏi
+                        </button>
                       </div>
                     </div>
                   ))}
