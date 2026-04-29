@@ -22,7 +22,7 @@ export default function HomePageAdmin() {
     setTeachers,
     setWaitCourses,
     setReceivedNotificatons,
-    setNotifications,
+   
     setWaitMultipleCourse,
     setSalary,
   } = useAdminStore();
@@ -31,7 +31,7 @@ export default function HomePageAdmin() {
     try {
       await signout();
       setTabActive("dashboard");
-      navigate("/signin");
+      navigate("/signin/admin");
     } catch (error) {
       console.error(error);
     }
@@ -53,10 +53,6 @@ export default function HomePageAdmin() {
   };
   const onclickNotification = async () => {
     setTabActive("notification");
-    const { notifications } = await AdminServices.getNotificaitons();
-    const { receivedNotifications } = await AdminServices.ReceiveNotification();
-    setReceivedNotificatons(receivedNotifications);
-    setNotifications(notifications);
   };
   const onclickWaitCourse = async () => {
     setTabActive("courses");
