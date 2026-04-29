@@ -6,7 +6,6 @@ import { Plus, Inbox, Send, Trash2, X } from 'lucide-react';
 import { useAdminStore } from '@/stores/useAdminStore';
 import { AdminServices } from '@/services/AdminService';
 
-// 1. Interfaces
 export interface Notification {
   notificationId: string;
   senderId: string;
@@ -96,7 +95,7 @@ export default function NotificationPageContent() {
     reset()
   };
 
-  // --- JSX ---
+
   return (
     <>
       <div className="w-full h-full  overflow-y-auto">

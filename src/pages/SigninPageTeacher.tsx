@@ -10,8 +10,6 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useNavigate } from "react-router-dom";
 import { getRedirectPath } from "@/lib/navigation";
-import { TeacherService } from "@/services/TeacherService";
-import { useTeacherStore } from "@/stores/useTeacherStore";
 
 const SigninSchema = z.object({
   username: z.string().min(1, "Tên đăng nhập không được để trống"),
@@ -59,29 +57,29 @@ export default function SigninPageTeacher({
       }}
       {...props}
     >
-      {/* CONTENT */}
+    
       <div className="flex flex-col items-center w-full max-w-[500px] px-4">
 
-        {/* LOGO */}
+       
         <img
           src="https://res.cloudinary.com/dlzg0btqt/image/upload/f_auto,q_auto/Blue_and_White_Coding_Minimalist_Business_Agency_Logo_1_jmjwft"
           alt="Logo"
           className="w-[80px] h-[80px] mb-6 rounded-xl shadow-md"
         />
 
-        {/* TITLE */}
+       
         <h1 className="text-[56px] md:text-[72px] font-semibold text-center mb-10 text-[#851385] leading-tight">
           Đăng nhập
           <br />
           Code YourSelf
         </h1>
 
-        {/* FORM */}
+        
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col gap-5 w-full"
         >
-          {/* USERNAME */}
+          
           <div className="flex flex-col gap-2">
             <Label className="text-base font-medium text-black">Tên đăng nhập</Label>
             <Input
@@ -98,7 +96,7 @@ export default function SigninPageTeacher({
             </div>
           </div>
 
-          {/* PASSWORD */}
+          
           <div className="flex flex-col gap-2">
             <Label className="text-base font-medium text-black">Mật khẩu</Label>
             <Input
@@ -116,7 +114,7 @@ export default function SigninPageTeacher({
             </div>
           </div>
 
-          {/* BUTTON */}
+         
           <Button
             type="submit"
             className="h-[56px] text-base font-semibold rounded-2xl !bg-[#851385] text-white"
@@ -126,7 +124,7 @@ export default function SigninPageTeacher({
           </Button>
         </form>
 
-        {/* REGISTER */}
+       
         <p className="mt-6 text-sm text-center">
           Bạn chưa có tài khoản?{" "}
           <a href="/signup" className="text-[#851385] font-semibold cursor-pointer">

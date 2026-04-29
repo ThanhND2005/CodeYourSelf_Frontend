@@ -34,14 +34,6 @@ export default function SigninPageAdmin({
     resolver: zodResolver(SigninSchema),
   });
   const {signinAdmin} = useAuthStore()
-  const {
-    setCourses,
-    setPayments,
-    setStudents,
-    setTeachers,
-    setWaitCourses,
-    setReceivedNotificatons,
-  } = useAdminStore();
   const {setTabActive} = useTabAdminStore()
   const navigate = useNavigate()
   const onSubmit = async (data: SigninFormValues) => {
@@ -52,14 +44,6 @@ export default function SigninPageAdmin({
       if(user)
       {
         
-        const { courses } = await AdminServices.getCourses();
-        const { studentBills } = await AdminServices.getStudentBills();
-        const { waitCourses } = await AdminServices.getWaitCourses();
-        const { receivedNotifications } = await AdminServices.ReceiveNotification();
-        setWaitCourses(waitCourses);
-        setCourses(courses);
-        setPayments(studentBills);
-        setReceivedNotificatons(receivedNotifications);
         setTabActive("dashboard");
         const correctPath = getRedirectPath(user.role as string)
         navigate(correctPath)

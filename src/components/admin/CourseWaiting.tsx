@@ -22,7 +22,7 @@ export interface Video {
   videoUrl: string;
 }
 
-// Format số tiền sang dạng 1,000,000 vnđ
+
 function formatCost(cost: string | number): string {
   const num = typeof cost === "number" ? cost : parseFloat(String(cost).replace(/[^0-9.]/g, ""));
   if (isNaN(num)) return String(cost);
@@ -210,7 +210,15 @@ export default function CourseApprovalPage() {
 
   const [selectedSingle, setSelectedSingle] = useState<WaitCourse | null>(null);
   const [selectedMultiple, setSelectedMultiple] = useState<WaitCourse | null>(null);
-
+  useEffect(()=>{
+    const fetchData = async () =>{
+          const {waitCourses} = await AdminServices.getWaitCourses()
+          const {waitMultipleCourses} = await AdminServices.getWaitMultipleCourses()
+          setWaitCourses(waitCourses)
+          setWaitMultipleCourse(waitMultipleCourses)
+    }
+    fetchData()
+  },[])
   const handleApproveSingle = async (id: string) => {
     try {
       await AdminServices.acceptWaitCourse(id)

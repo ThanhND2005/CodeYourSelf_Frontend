@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -18,16 +18,9 @@ import {
 } from "lucide-react";
 import { useAdminStore } from "@/stores/useAdminStore";
 import { useTabAdminStore } from "@/stores/useTabStore";
-
-// ─── 1. Interface DTO - Cấu trúc dữ liệu API cần trả về ─────────────────────
-// CHÚ THÍCH CHO BE: 
-// Khi viết API lấy danh sách thông báo, bạn cần JOIN/include các bảng lại với nhau.
-// Dữ liệu trả về cho FE sẽ là một mảng các object có cấu trúc như sau:
-
-// ─── 2. Mock Data đã gộp chuẩn DTO ─────────────────────────────────────────
+import { AdminServices } from "@/services/AdminService";
 
 
-// ─── 3. UI Component Helper Types ──────────────────────────────────────────
 interface PendingItem {
   id: string;
   label: string;
@@ -82,10 +75,9 @@ const BookIcon = () => (
 );
 
 
-// ─── Hàm Hỗ trợ Xử lý Thời gian ─────────────────────────────────────────────
 const formatTimeAgo = (dateString: string) => {
   const date = new Date(dateString);
-  // Fake logic format thời gian (Bạn có thể dùng thư viện date-fns hoặc dayjs sau)
+
   return `${date.getHours()} giờ trước`; 
 };
 
@@ -93,10 +85,10 @@ const formatTimeAgo = (dateString: string) => {
 export default function AdminDashboard() {
   const [activeBar, setActiveBar] = useState<string | null>(null);
   const {setTabActive} = useTabAdminStore()
-  // Lấy dữ liệu từ Store
-  const { students, teachers, courses, payments, waitCourses,receivedNotifications } = useAdminStore();
+  
+  const { students, teachers, courses, payments, waitCourses,receivedNotifications,setCourses,setWaitCourses,setStudents,setTeachers,setPayments,setReceivedNotificatons } = useAdminStore();
 
-  // ─── Handlers ─────────────────────────────────────────────────────────────
+  
   const handlePendingItemClick = (id: string, label: string) => {
     setTabActive('courses')
   };
@@ -107,7 +99,23 @@ export default function AdminDashboard() {
     setTabActive('notification')
   };
 
-  // ─── Tính toán Dữ liệu Hiển thị ───────────────────────────────────────────
+  useEffect(()=>{
+    const fetchData = async () =>{
+          const { students } = await AdminServices.getStudents();
+          const { teachers } = await AdminServices.getTeachers();
+          const { courses } = await AdminServices.getCourses();
+          const { studentBills } = await AdminServices.getStudentBills();
+          const { waitCourses } = await AdminServices.getWaitCourses();
+          const { receivedNotifications } = await AdminServices.ReceiveNotification();
+          setWaitCourses(waitCourses);
+          setStudents(students);
+          setTeachers(teachers);
+          setCourses(courses);
+          setPayments(studentBills);
+          setReceivedNotificatons(receivedNotifications);
+    }
+    fetchData()
+  },[])
   const totalRevenue = (payments ?? [])
     .filter((p) => p.status == "SUCCESS")
     .reduce((s, p) => s + p.amount, 0);

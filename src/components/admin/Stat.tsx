@@ -4,9 +4,7 @@ import { useAdminStore } from "@/stores/useAdminStore";
 import type { Salary, Teacher } from "@/types/admin";
 import { AdminServices } from "@/services/AdminService";
 
-// =============================================
-// TYPES
-// =============================================
+
 interface TeacherSalaryCard {
   teacher: Teacher;
   salary: Salary;
@@ -19,9 +17,7 @@ interface RevenueStats {
   totalCoursesSoldInMonth: number; 
 }
 
-// =============================================
-// HELPER
-// =============================================
+
 function formatMillions(value: number): string {
   return `${value.toLocaleString("vi-VN")} vnđ`;
 }
@@ -142,13 +138,21 @@ export default function DoanhSoPage() {
   const payments = useAdminStore((state) => state.payments);
   const salaries = useAdminStore((state) => state.salary);
   const teachers = useAdminStore((state) => state.teachers);
-  const {setSalary} = useAdminStore()
-  // State filter và UI
+  const {setSalary,setPayments} = useAdminStore()
+
   const [selectedMonth] = useState<number>(3); // Mặc định tháng 3 để test
   const [selectedYear] = useState<number>(2026);
   const [selectedQrUrl, setSelectedQrUrl] = useState<string | null>(null);
 
-  // 1. Tự động tính toán RevenueStats
+  useEffect(() =>{
+    const fetchData = async () =>{
+      const { studentBills } = await AdminServices.getStudentBills();
+      setPayments(studentBills);
+      const {teacherBills} = await AdminServices.getSalary()
+      setSalary(teacherBills)
+    }
+    fetchData()
+  },[])
   const stats = useMemo<RevenueStats>(() => {
     const successfulPayments = payments?.filter(p => p.status === "SUCCESS") || [];
     
@@ -169,7 +173,7 @@ export default function DoanhSoPage() {
     };
   }, [payments, selectedMonth, selectedYear]);
 
-  // 2. Tự động lấy danh sách hóa đơn theo tháng/năm
+
   const invoices = useMemo<TeacherSalaryCard[]>(() => {
     if (!salaries || !teachers) return [];
 
@@ -180,7 +184,7 @@ export default function DoanhSoPage() {
       return { teacher, salary };
     }).filter(card => card.teacher !== undefined) as TeacherSalaryCard[];
 
-    // Sắp xếp: Ưu tiên PENDING lên trước -> Sau đó đến thời gian tạo mới nhất
+    
     return cards.sort((a, b) => {
       const statusPriority = { "PENDING": 0, "PAID": 1 };
       const priorityA = statusPriority[a.salary.status as keyof typeof statusPriority] ?? 99;
@@ -197,16 +201,13 @@ export default function DoanhSoPage() {
   }, [salaries, teachers, selectedMonth, selectedYear]);
 
 
-  // =============================================
-  // HANDLERS
-  // =============================================
+  
   
   const handleDeleteInvoice = async (salaryId: string) => {
     if (!window.confirm("Bạn có chắc muốn xóa hóa đơn này không?")) return;
     try {
       console.log(`[API] Xóa hóa đơn salaryId=${salaryId}`);
-      // Thực hiện logic gọi API hoặc cập nhật lại Zustand store ở đây
-      // Ví dụ: useAdminStore.getState().deleteSalary(salaryId);
+     
       
       alert('Đã xóa thành công!');
     } catch (err) {

@@ -37,18 +37,7 @@ export default function HomePageAdmin() {
     }
   };
   const onlickDashBoard = async () => {
-    const { students } = await AdminServices.getStudents();
-    const { teachers } = await AdminServices.getTeachers();
-    const { courses } = await AdminServices.getCourses();
-    const { studentBills } = await AdminServices.getStudentBills();
-    const { waitCourses } = await AdminServices.getWaitCourses();
-    const { receivedNotifications } = await AdminServices.ReceiveNotification();
-    setWaitCourses(waitCourses);
-    setStudents(students);
-    setTeachers(teachers);
-    setCourses(courses);
-    setPayments(studentBills);
-    setReceivedNotificatons(receivedNotifications);
+    
     setTabActive("dashboard");
   };
   const onclickNotification = async () => {
@@ -58,8 +47,6 @@ export default function HomePageAdmin() {
     setTabActive("courses");
     const {waitCourses} = await AdminServices.getWaitCourses()
     const {waitMultipleCourses} = await AdminServices.getWaitMultipleCourses()
-    console.log(waitCourses)
-    console.log(waitMultipleCourses)
     setWaitCourses(waitCourses)
     setWaitMultipleCourse(waitMultipleCourses)
   };
