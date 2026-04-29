@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -6,7 +6,6 @@ import { Plus, Inbox, Send, Trash2, X } from 'lucide-react';
 import { useAdminStore } from '@/stores/useAdminStore';
 import { AdminServices } from '@/services/AdminService';
 
-// 1. Interfaces
 export interface Notification {
   notificationId: string;
   senderId: string;
@@ -40,8 +39,17 @@ type NotificationFormValues = z.infer<typeof notificationSchema>;
 
 export default function NotificationPageContent() {
   // --- STATE ---
-  const {notifications,receivedNotifications,setNotifications} = useAdminStore()
+  const {notifications,receivedNotifications,setNotifications,setReceivedNotificatons} = useAdminStore()
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  useEffect(() =>{
+    const fectNotification = async () =>{
+      const {notifications} = await AdminServices.getNotificaitons()
+      const {receivedNotifications} =await AdminServices.ReceiveNotification()
+      setNotifications(notifications)
+      setReceivedNotificatons(receivedNotifications)
+    }
+    fectNotification()
+  },[notifications, receivedNotifications])
 
   // --- FORM SETUP ---
   const {
@@ -84,10 +92,10 @@ export default function NotificationPageContent() {
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
-    reset(); // Xóa trắng dữ liệu form khi đóng
+    reset()
   };
 
-  // --- JSX ---
+
   return (
     <>
       <div className="w-full h-full  overflow-y-auto">

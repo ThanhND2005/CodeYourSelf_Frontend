@@ -22,6 +22,13 @@ export interface Video {
   videoUrl: string;
 }
 
+
+function formatCost(cost: string | number): string {
+  const num = typeof cost === "number" ? cost : parseFloat(String(cost).replace(/[^0-9.]/g, ""));
+  if (isNaN(num)) return String(cost);
+  return `${num.toLocaleString("vi-VN")} vnđ`;
+}
+
 async function fetchCourseVideosApi(courseId: string): Promise<Video[]> {
   const { videos } = await TeacherService.getVideo(courseId);
   return Promise.resolve(videos);
@@ -127,7 +134,7 @@ function MultipleCourseDialog({ course, onClose }: { course: WaitCourse; onClose
                 )}
                 <div>
                   <p className="font-semibold text-sm text-gray-800">{c.name}</p>
-                  <p className="text-xs text-violet-600 font-medium mt-1">{c.cost}</p>
+                  <p className="text-xs text-violet-600 font-medium mt-1">{formatCost(c.cost)}</p>
                 </div>
               </div>
             ))}
@@ -172,7 +179,7 @@ function CourseCard({ course, onApprove, onReject, onDetail, isMultiple }: {
           <p className="text-xs text-gray-500 mt-1 line-clamp-1">{course.summary}</p>
           <div className="flex items-center gap-4 mt-2 text-xs text-gray-600">
             <span>👨‍🏫 {course.teacherName}</span>
-            <span className="font-medium text-red-500">💰 {course.cost}</span>
+            <span className="font-medium text-red-500">💰 {formatCost(course.cost)}</span>
           </div>
         </div>
       </div>
@@ -203,7 +210,15 @@ export default function CourseApprovalPage() {
 
   const [selectedSingle, setSelectedSingle] = useState<WaitCourse | null>(null);
   const [selectedMultiple, setSelectedMultiple] = useState<WaitCourse | null>(null);
-
+  useEffect(()=>{
+    const fetchData = async () =>{
+          const {waitCourses} = await AdminServices.getWaitCourses()
+          const {waitMultipleCourses} = await AdminServices.getWaitMultipleCourses()
+          setWaitCourses(waitCourses)
+          setWaitMultipleCourse(waitMultipleCourses)
+    }
+    fetchData()
+  },[])
   const handleApproveSingle = async (id: string) => {
     try {
       await AdminServices.acceptWaitCourse(id)

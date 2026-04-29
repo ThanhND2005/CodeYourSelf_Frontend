@@ -22,7 +22,7 @@ export default function HomePageAdmin() {
     setTeachers,
     setWaitCourses,
     setReceivedNotificatons,
-    setNotifications,
+   
     setWaitMultipleCourse,
     setSalary,
   } = useAdminStore();
@@ -31,39 +31,22 @@ export default function HomePageAdmin() {
     try {
       await signout();
       setTabActive("dashboard");
-      navigate("/signin");
+      navigate("/signin/admin");
     } catch (error) {
       console.error(error);
     }
   };
   const onlickDashBoard = async () => {
-    const { students } = await AdminServices.getStudents();
-    const { teachers } = await AdminServices.getTeachers();
-    const { courses } = await AdminServices.getCourses();
-    const { studentBills } = await AdminServices.getStudentBills();
-    const { waitCourses } = await AdminServices.getWaitCourses();
-    const { receivedNotifications } = await AdminServices.ReceiveNotification();
-    setWaitCourses(waitCourses);
-    setStudents(students);
-    setTeachers(teachers);
-    setCourses(courses);
-    setPayments(studentBills);
-    setReceivedNotificatons(receivedNotifications);
+    
     setTabActive("dashboard");
   };
   const onclickNotification = async () => {
     setTabActive("notification");
-    const { notifications } = await AdminServices.getNotificaitons();
-    const { receivedNotifications } = await AdminServices.ReceiveNotification();
-    setReceivedNotificatons(receivedNotifications);
-    setNotifications(notifications);
   };
   const onclickWaitCourse = async () => {
     setTabActive("courses");
     const {waitCourses} = await AdminServices.getWaitCourses()
     const {waitMultipleCourses} = await AdminServices.getWaitMultipleCourses()
-    console.log(waitCourses)
-    console.log(waitMultipleCourses)
     setWaitCourses(waitCourses)
     setWaitMultipleCourse(waitMultipleCourses)
   };

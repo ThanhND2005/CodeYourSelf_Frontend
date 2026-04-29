@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -18,16 +18,9 @@ import {
 } from "lucide-react";
 import { useAdminStore } from "@/stores/useAdminStore";
 import { useTabAdminStore } from "@/stores/useTabStore";
-
-// ─── 1. Interface DTO - Cấu trúc dữ liệu API cần trả về ─────────────────────
-// CHÚ THÍCH CHO BE: 
-// Khi viết API lấy danh sách thông báo, bạn cần JOIN/include các bảng lại với nhau.
-// Dữ liệu trả về cho FE sẽ là một mảng các object có cấu trúc như sau:
-
-// ─── 2. Mock Data đã gộp chuẩn DTO ─────────────────────────────────────────
+import { AdminServices } from "@/services/AdminService";
 
 
-// ─── 3. UI Component Helper Types ──────────────────────────────────────────
 interface PendingItem {
   id: string;
   label: string;
@@ -82,10 +75,9 @@ const BookIcon = () => (
 );
 
 
-// ─── Hàm Hỗ trợ Xử lý Thời gian ─────────────────────────────────────────────
 const formatTimeAgo = (dateString: string) => {
   const date = new Date(dateString);
-  // Fake logic format thời gian (Bạn có thể dùng thư viện date-fns hoặc dayjs sau)
+
   return `${date.getHours()} giờ trước`; 
 };
 
@@ -93,10 +85,10 @@ const formatTimeAgo = (dateString: string) => {
 export default function AdminDashboard() {
   const [activeBar, setActiveBar] = useState<string | null>(null);
   const {setTabActive} = useTabAdminStore()
-  // Lấy dữ liệu từ Store
-  const { students, teachers, courses, payments, waitCourses,receivedNotifications } = useAdminStore();
+  
+  const { students, teachers, courses, payments, waitCourses,receivedNotifications,setCourses,setWaitCourses,setStudents,setTeachers,setPayments,setReceivedNotificatons } = useAdminStore();
 
-  // ─── Handlers ─────────────────────────────────────────────────────────────
+  
   const handlePendingItemClick = (id: string, label: string) => {
     setTabActive('courses')
   };
@@ -107,11 +99,27 @@ export default function AdminDashboard() {
     setTabActive('notification')
   };
 
-  // ─── Tính toán Dữ liệu Hiển thị ───────────────────────────────────────────
+  useEffect(()=>{
+    const fetchData = async () =>{
+          const { students } = await AdminServices.getStudents();
+          const { teachers } = await AdminServices.getTeachers();
+          const { courses } = await AdminServices.getCourses();
+          const { studentBills } = await AdminServices.getStudentBills();
+          const { waitCourses } = await AdminServices.getWaitCourses();
+          const { receivedNotifications } = await AdminServices.ReceiveNotification();
+          setWaitCourses(waitCourses);
+          setStudents(students);
+          setTeachers(teachers);
+          setCourses(courses);
+          setPayments(studentBills);
+          setReceivedNotificatons(receivedNotifications);
+    }
+    fetchData()
+  },[])
   const totalRevenue = (payments ?? [])
     .filter((p) => p.status == "SUCCESS")
     .reduce((s, p) => s + p.amount, 0);
-  const totalRevenueTr = (totalRevenue / 1_000_000).toFixed(0);
+  const totalRevenueFormatted = totalRevenue.toLocaleString("vi-VN");
 
   const monthlyRevenueData = useMemo(() => {
     return Array.from({ length: 12 }, (_, i) => {
@@ -121,7 +129,8 @@ export default function AdminDashboard() {
         .reduce((sum, p) => sum + p.amount, 0);
       return {
         month: `T${month}`,
-        revenue: total / 1_000_000,
+        revenue: total / 1_000_000, // giữ đơn vị triệu cho biểu đồ
+        revenueRaw: total,
       };
     });
   }, [payments]);
@@ -130,7 +139,7 @@ export default function AdminDashboard() {
     {
       id: "pending-courses",
       label: "Yêu cầu duyệt khóa học",
-      count: waitCourses?.length ?? 0,
+      count: waitCourses?.filter((t) => t.status == "Chờ duyệt").length ?? 0,
       color: "from-green-100 to-green-200",
       icon: <BookIcon />,
     },
@@ -150,7 +159,7 @@ export default function AdminDashboard() {
           { label: "Tổng học viên", value: students?.length, icon: <StudentIcon />, accent: "text-green-600" },
           { label: "Tổng giáo viên", value: teachers?.length, icon: <TeacherIcon />, accent: "text-blue-500" },
           { label: "Tổng khóa học", value: courses?.length, icon: <CourseIcon />, accent: "text-pink-500" },
-          { label: "Tổng doanh số", value: `${totalRevenueTr}tr VND`, icon: <RevenueIcon />, accent: "text-amber-500" },
+          { label: "Tổng doanh số", value: `${totalRevenueFormatted} vnđ`, icon: <RevenueIcon />, accent: "text-amber-500" },
         ].map((card, i) => (
           <div
             key={i}
@@ -205,21 +214,20 @@ export default function AdminDashboard() {
               <div className="bg-pink-50 rounded-xl px-4 py-2">
                 <p className="text-xs text-gray-400">Cao nhất</p>
                 <p className="text-sm font-bold text-pink-500">
-                  {Math.max(...monthlyRevenueData.map((d) => d.revenue)).toFixed(1)} tr
+                  {Math.max(...monthlyRevenueData.map((d) => d.revenueRaw ?? 0)).toLocaleString("vi-VN")} vnđ
                 </p>
               </div>
               <div className="bg-purple-50 rounded-xl px-4 py-2">
                 <p className="text-xs text-gray-400">Trung bình</p>
                 <p className="text-sm font-bold text-purple-500">
-                  {(
-                    monthlyRevenueData.reduce((s, d) => s + d.revenue, 0) / 12
-                  ).toFixed(1)}{" "}
-                  tr
+                  {Math.round(
+                    monthlyRevenueData.reduce((s, d) => s + (d.revenueRaw ?? 0), 0) / 12
+                  ).toLocaleString("vi-VN")} vnđ
                 </p>
               </div>
               <div className="bg-amber-50 rounded-xl px-4 py-2">
                 <p className="text-xs text-gray-400">Tổng năm</p>
-                <p className="text-sm font-bold text-amber-500">{totalRevenueTr} tr</p>
+                <p className="text-sm font-bold text-amber-500">{totalRevenueFormatted} vnđ</p>
               </div>
             </div>
 
@@ -266,7 +274,7 @@ export default function AdminDashboard() {
         {/* Right column — Thông báo gần đây */}
         <div className="bg-white/80 backdrop-blur rounded-2xl p-5 border border-white shadow-sm">
           <h2 className="text-base font-semibold text-gray-600 mb-4">Thông báo gần đây:</h2>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 max-h-80 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-pink-200 scrollbar-track-transparent">
             {receivedNotifications?.map((ntf) => (
               <div
                 key={ntf.id}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   BookOpen,
   DollarSign,
@@ -8,6 +8,7 @@ import {
   Users,
 } from "lucide-react";
 import { useTeacherStore } from "@/stores/useTeacherStore";
+import { TeacherService } from "@/services/TeacherService";
 
 
 
@@ -17,11 +18,18 @@ import { useTeacherStore } from "@/stores/useTeacherStore";
 
 export default function IncomeDashboard() {
   
-  const stats = useTeacherStore((s) => s.stats)
+ 
+  const {teacher,stats,setStats} = useTeacherStore()
   const formatMillions = (amount: number) => {
-    return `${(amount / 1000000).toLocaleString("vi-VN")} Tr`;
+    return `${amount.toLocaleString("vi-VN")} vnđ`;
   };
-
+  useEffect(()=>{
+    const fetchStat = async () =>{
+      const {stats} = await TeacherService.getStats(teacher?.userId as string)
+      setStats(stats)
+    }
+    fetchStat()
+  },[])
   return (
     <div className="p-2 md:p-2 w-full min-h-screen">
       <div className="max-w-7xl mx-auto">

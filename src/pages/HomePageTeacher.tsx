@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+
 import { cn } from "@/lib/utils";
 import {
   Home,
@@ -15,18 +15,14 @@ import DashBoard from "@/components/teacher/DashBoard";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useNavigate } from "react-router-dom";
 
-import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
 import CourseManagementComponent from "@/components/teacher/CourseComponent";
 import TeacherProfile from "@/components/teacher/ProfileComponent";
 import NotificationPage from "@/components/teacher/NotificationComponent";
 import IncomeDashboard from "@/components/teacher/IncomeComponent";
 import { useTeacherStore } from "@/stores/useTeacherStore";
 import {useTabTeacherStore } from "@/stores/useTabStore";
-import { TeacherService } from "@/services/TeacherService";
+
 import CourseDetailTeacher from "@/components/teacher/CourseDetailTeacher";
 
 
@@ -35,26 +31,9 @@ import CourseDetailTeacher from "@/components/teacher/CourseDetailTeacher";
 
 export default function HomePageTeacher() {
   const {tabActive,setTabActive} = useTabTeacherStore()
-  const {setSingleCourses,setMultipleCoures,setStats,setNotifications} = useTeacherStore()
   const signout = useAuthStore((state) => state.signout);
   const navigate = useNavigate();
-  const onclickCourse = async() =>{
-    const {singleCourses} = await TeacherService.getSingleCourses(teacher?.userId as string)
-    const {multipleCourses} = await TeacherService.getMultipleCourses(teacher?.userId as string)
-    setSingleCourses(singleCourses)
-    setMultipleCoures(multipleCourses)
-    setTabActive('courses')
-  }
-  const onclickIncome = async() => {
-    const {stats} = await TeacherService.getStats(teacher?.userId as string)
-    setStats(stats)
-    setTabActive('income')
-  }
-  const onclickNotification = async() =>{
-    const {notifications} = await TeacherService.getNotifications(teacher?.userId as string)
-    setNotifications(notifications)
-    setTabActive("notification")
-  }
+  
   const logout = async () => {
     try {
       await signout();
@@ -66,7 +45,7 @@ export default function HomePageTeacher() {
   };
 
   const teacher = useTeacherStore((s) => s.teacher)
-  const [openAvatar, setOpenAvatar] = useState(false);
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#F8F2F9] to-[#CBABCF]">
@@ -94,92 +73,18 @@ export default function HomePageTeacher() {
 
         {/* ===== teacher SECTION ===== */}
         <div className="flex items-center gap-3">
-
-          {/* ===== DIALOG SỬA THÔNG TIN ===== */}
-          <Dialog>
-            <DialogTrigger asChild>
               <div className="cursor-pointer text-right">
                 <p className="text-gray-800 text-md font-semibold">
                   {teacher?.name}
                 </p>
                 <p className="text-gray-800 text-sm font-semibold">Giáo viên</p>
               </div>
-            </DialogTrigger>
-
-            <DialogContent className="max-w-[500px] p-6">
-              <div className="flex flex-col gap-3">
-                <h2 className="text-2xl font-bold text-center text-[#851385] mb-2">
-                  Cập nhật thông tin cá nhân
-                </h2>
-
-                <div>
-                  <Label>Họ và tên</Label>
-                  <Input defaultValue={teacher?.name} />
-                </div>
-
-                <div>
-                  <Label>Ngày sinh</Label>
-                  <Input type="date" />
-                </div>
-
-                <div>
-                  <Label>Giới tính</Label>
-                  <RadioGroup defaultValue="Nữ">
-                    <div className="flex gap-4">
-                      <div className="flex items-center gap-1">
-                        <RadioGroupItem value="Nam" />
-                        <Label>Nam</Label>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <RadioGroupItem value="Nữ" />
-                        <Label>Nữ</Label>
-                      </div>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                <div>
-                  <Label>Địa chỉ</Label>
-                  <Input placeholder="Nhập địa chỉ..." />
-                </div>
-
-                <Button className="bg-[#851385] hover:bg-[#6a0f6a] text-white rounded-xl py-2" onClick={() => alert("Chưa xử lý logic")}>
-                  Cập nhật
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          {/* ===== DIALOG AVATAR ===== */}
-          <Dialog open={openAvatar} onOpenChange={setOpenAvatar}>
-            <DialogTrigger asChild>
               <div className="w-[40px] h-[40px] rounded-full overflow-hidden cursor-pointer">
                 <img
                   src={teacher?.avatarUrl}
                   className="w-full h-full object-cover"
                 />
               </div>
-            </DialogTrigger>
-
-            <DialogContent>
-              <div className="flex flex-col gap-3">
-                <h2 className="text-xl text-[#851385] font-bold text-center">
-                  Cập nhật avatar
-                </h2>
-
-                <Input type="file" />
-
-                <Button className="bg-[#851385] hover:bg-[#6a0f6a] text-white rounded-xl py-2"
-                  onClick={() => {
-                    alert("Upload chưa xử lý");
-                    setOpenAvatar(false);
-                  }}
-                >
-                  Upload
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
 
         </div>
       </div>
@@ -201,7 +106,7 @@ export default function HomePageTeacher() {
           </div>
 
           <div
-            onClick={() => onclickNotification()}
+            onClick={() => setTabActive("notification")}
             className={cn(
               "flex flex-col items-center gap-1 cursor-pointer",
               tabActive === "notification" && "text-[#851385]"
@@ -223,7 +128,7 @@ export default function HomePageTeacher() {
           </div>
 
           <div
-            onClick={() => onclickIncome()}
+            onClick={() => setTabActive('income')}
             className={cn(
               "flex flex-col items-center gap-1 cursor-pointer",
               tabActive === "income" && "text-[#851385]"
@@ -234,7 +139,7 @@ export default function HomePageTeacher() {
           </div>
 
           <div
-            onClick={() => onclickCourse()}
+            onClick={() => setTabActive('courses')}
             className={cn(
               "flex flex-col items-center gap-1 cursor-pointer",
               tabActive === "courses" && "text-[#851385]"
