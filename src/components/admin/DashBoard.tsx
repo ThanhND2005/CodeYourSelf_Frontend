@@ -111,7 +111,7 @@ export default function AdminDashboard() {
   const totalRevenue = (payments ?? [])
     .filter((p) => p.status == "SUCCESS")
     .reduce((s, p) => s + p.amount, 0);
-  const totalRevenueTr = (totalRevenue / 1_000_000).toFixed(0);
+  const totalRevenueFormatted = totalRevenue.toLocaleString("vi-VN");
 
   const monthlyRevenueData = useMemo(() => {
     return Array.from({ length: 12 }, (_, i) => {
@@ -121,7 +121,8 @@ export default function AdminDashboard() {
         .reduce((sum, p) => sum + p.amount, 0);
       return {
         month: `T${month}`,
-        revenue: total / 1_000_000,
+        revenue: total / 1_000_000, // giữ đơn vị triệu cho biểu đồ
+        revenueRaw: total,
       };
     });
   }, [payments]);
@@ -130,7 +131,7 @@ export default function AdminDashboard() {
     {
       id: "pending-courses",
       label: "Yêu cầu duyệt khóa học",
-      count: waitCourses?.length ?? 0,
+      count: waitCourses?.filter((t) => t.status == "Chờ duyệt").length ?? 0,
       color: "from-green-100 to-green-200",
       icon: <BookIcon />,
     },
@@ -150,7 +151,7 @@ export default function AdminDashboard() {
           { label: "Tổng học viên", value: students?.length, icon: <StudentIcon />, accent: "text-green-600" },
           { label: "Tổng giáo viên", value: teachers?.length, icon: <TeacherIcon />, accent: "text-blue-500" },
           { label: "Tổng khóa học", value: courses?.length, icon: <CourseIcon />, accent: "text-pink-500" },
-          { label: "Tổng doanh số", value: `${totalRevenueTr}tr VND`, icon: <RevenueIcon />, accent: "text-amber-500" },
+          { label: "Tổng doanh số", value: `${totalRevenueFormatted} vnđ`, icon: <RevenueIcon />, accent: "text-amber-500" },
         ].map((card, i) => (
           <div
             key={i}
@@ -205,21 +206,20 @@ export default function AdminDashboard() {
               <div className="bg-pink-50 rounded-xl px-4 py-2">
                 <p className="text-xs text-gray-400">Cao nhất</p>
                 <p className="text-sm font-bold text-pink-500">
-                  {Math.max(...monthlyRevenueData.map((d) => d.revenue)).toFixed(1)} tr
+                  {Math.max(...monthlyRevenueData.map((d) => d.revenueRaw ?? 0)).toLocaleString("vi-VN")} vnđ
                 </p>
               </div>
               <div className="bg-purple-50 rounded-xl px-4 py-2">
                 <p className="text-xs text-gray-400">Trung bình</p>
                 <p className="text-sm font-bold text-purple-500">
-                  {(
-                    monthlyRevenueData.reduce((s, d) => s + d.revenue, 0) / 12
-                  ).toFixed(1)}{" "}
-                  tr
+                  {Math.round(
+                    monthlyRevenueData.reduce((s, d) => s + (d.revenueRaw ?? 0), 0) / 12
+                  ).toLocaleString("vi-VN")} vnđ
                 </p>
               </div>
               <div className="bg-amber-50 rounded-xl px-4 py-2">
                 <p className="text-xs text-gray-400">Tổng năm</p>
-                <p className="text-sm font-bold text-amber-500">{totalRevenueTr} tr</p>
+                <p className="text-sm font-bold text-amber-500">{totalRevenueFormatted} vnđ</p>
               </div>
             </div>
 
@@ -266,7 +266,7 @@ export default function AdminDashboard() {
         {/* Right column — Thông báo gần đây */}
         <div className="bg-white/80 backdrop-blur rounded-2xl p-5 border border-white shadow-sm">
           <h2 className="text-base font-semibold text-gray-600 mb-4">Thông báo gần đây:</h2>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 max-h-80 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-pink-200 scrollbar-track-transparent">
             {receivedNotifications?.map((ntf) => (
               <div
                 key={ntf.id}

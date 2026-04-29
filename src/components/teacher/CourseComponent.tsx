@@ -126,9 +126,9 @@ export default function CourseManagementComponent() {
     setStudents,
     setVideos,
     teacher,
-   
+
   } = useTeacherStore();
-  const {setTabActive} = useTabTeacherStore()
+  const { setTabActive } = useTabTeacherStore()
   const [isSingleDialogOpen, setIsSingleDialogOpen] = useState(false);
   const [isMultiDialogOpen, setIsMultiDialogOpen] = useState(false);
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
@@ -162,7 +162,7 @@ export default function CourseManagementComponent() {
   const handleDeleteSingleCourse = async (courseId: string) => {
     try {
       await TeacherService.deleteCourse(courseId)
-      const {singleCourses : singleCourses1} = await TeacherService.getSingleCourses(teacher?.userId as string)
+      const { singleCourses: singleCourses1 } = await TeacherService.getSingleCourses(teacher?.userId as string)
       setSingleCourses(singleCourses1)
     } catch (error) {
       console.error(error)
@@ -172,17 +172,17 @@ export default function CourseManagementComponent() {
   const handleDeleteMultiCourse = async (multiCourseId: string) => {
     try {
       await TeacherService.deleteMultipleCourse(multiCourseId)
-      const {multipleCourses : multipleCourses1} = await TeacherService.getMultipleCourses(teacher?.userId as string)
+      const { multipleCourses: multipleCourses1 } = await TeacherService.getMultipleCourses(teacher?.userId as string)
       setMultipleCoures(multipleCourses1)
     } catch (error) {
       console.error(error)
     }
   };
 
-  const handleViewSingleDetails = async(course: SingleCourse) => {
+  const handleViewSingleDetails = async (course: SingleCourse) => {
     setCourse(course)
     try {
-      const {students} = await TeacherService.getStudents(course.courseId as string)
+      const { students } = await TeacherService.getStudents(course.courseId as string)
       setStudents(students)
       setTabActive('CourseDetail')
     } catch (error) {
@@ -368,14 +368,14 @@ export default function CourseManagementComponent() {
         correctAnswer: data.correctAnswer,
         timestamp: data.timestamp,
       };
-      await TeacherService.postQuestion(newQuestion.videoId,newQuestion.content,newQuestion.optionA,newQuestion.optionB,newQuestion.optionC,newQuestion.optionD,newQuestion.correctAnswer,newQuestion.timestamp)
+      await TeacherService.postQuestion(newQuestion.videoId, newQuestion.content, newQuestion.optionA, newQuestion.optionB, newQuestion.optionC, newQuestion.optionD, newQuestion.correctAnswer, newQuestion.timestamp)
       setQuestionsByVideo((prev) => ({
         ...prev,
         [targetVideoForQuestion.videoId]: [...(prev[targetVideoForQuestion.videoId] ?? []), newQuestion],
       }));
       setIsQuestionDialogOpen(false);
       questionForm.reset();
-      
+
     } catch (error) {
       console.error(error)
     }
@@ -462,7 +462,7 @@ export default function CourseManagementComponent() {
                     </div>
                     <div className="min-w-0">
                       <p className="font-bold text-sm text-gray-800 truncate">{multi.name}</p>
-                      <p className="text-xs text-pink-700">{multi.cost.toLocaleString("vi-VN")} VNĐ</p>
+                      <p className="text-xs text-pink-700">{multi.cost.toLocaleString("vi-VN")} vnđ</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-2 shrink-0">
@@ -495,7 +495,7 @@ export default function CourseManagementComponent() {
                     </div>
                     <div className="min-w-0">
                       <p className="font-bold text-sm text-gray-800 truncate">{multi.name}</p>
-                      <p className="text-xs text-orange-600">{multi.cost.toLocaleString("vi-VN")} VNĐ</p>
+                      <p className="text-xs text-orange-600">{multi.cost.toLocaleString("vi-VN")} vnđ  </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-2 shrink-0">
@@ -512,7 +512,6 @@ export default function CourseManagementComponent() {
           </div>
         </div>
       </div>
-
       {/* DANH SÁCH KHÓA ĐƠN */}
       <div>
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-purple-800">
@@ -537,7 +536,7 @@ export default function CourseManagementComponent() {
                     </div>
                     <div className="min-w-0">
                       <p className="font-bold text-sm text-gray-800 truncate">{course.name}</p>
-                      <p className="text-xs text-purple-700">{course.cost.toLocaleString("vi-VN")} VNĐ</p>
+                      <p className="text-xs text-purple-700">{course.cost.toLocaleString("vi-VN")} vnđ</p>
                       {course.multipleCourseId && <span className="text-xs text-gray-500 flex items-center gap-0.5"><CheckCircle size={10} /> Thuộc Combo</span>}
                     </div>
                   </div>
@@ -571,7 +570,7 @@ export default function CourseManagementComponent() {
                     </div>
                     <div className="min-w-0">
                       <p className="font-bold text-sm text-gray-800 truncate">{course.name}</p>
-                      <p className="text-xs text-orange-600">{course.cost.toLocaleString("vi-VN")} VNĐ</p>
+                      <p className="text-xs text-orange-600">{course.cost.toLocaleString("vi-VN")} vnđ</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-2 shrink-0">

@@ -23,7 +23,7 @@ interface RevenueStats {
 // HELPER
 // =============================================
 function formatMillions(value: number): string {
-  return `${(value / 1_000_000).toLocaleString("vi-VN")} tr (VND)`;
+  return `${value.toLocaleString("vi-VN")} vnđ`;
 }
 
 // =============================================

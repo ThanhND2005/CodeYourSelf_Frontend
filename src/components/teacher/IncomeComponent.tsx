@@ -19,7 +19,7 @@ export default function IncomeDashboard() {
   
   const stats = useTeacherStore((s) => s.stats)
   const formatMillions = (amount: number) => {
-    return `${(amount / 1000000).toLocaleString("vi-VN")} Tr`;
+    return `${amount.toLocaleString("vi-VN")} vnđ`;
   };
 
   return (
