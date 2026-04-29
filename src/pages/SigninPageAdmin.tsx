@@ -51,15 +51,12 @@ export default function SigninPageAdmin({
       const user = useAuthStore.getState().user
       if(user)
       {
-        const { students } = await AdminServices.getStudents();
-        const { teachers } = await AdminServices.getTeachers();
+        
         const { courses } = await AdminServices.getCourses();
         const { studentBills } = await AdminServices.getStudentBills();
         const { waitCourses } = await AdminServices.getWaitCourses();
         const { receivedNotifications } = await AdminServices.ReceiveNotification();
         setWaitCourses(waitCourses);
-        setStudents(students);
-        setTeachers(teachers);
         setCourses(courses);
         setPayments(studentBills);
         setReceivedNotificatons(receivedNotifications);

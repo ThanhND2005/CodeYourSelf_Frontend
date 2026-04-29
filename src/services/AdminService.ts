@@ -5,11 +5,19 @@ export const AdminServices ={
         const res = await api.get(`/admin/getStudents`,{withCredentials: true})
         return res.data
     },
+    getStudentsPaginated : async (page: number = 1, limit: number = 10) =>{
+        const res = await api.get(`/admin/getStudentsPaginated`,{params: {page, limit}, withCredentials: true})
+        return res.data
+    },
     deleteStudent : async (studentId : string) =>{
         await api.patch(`/admin/deleteStudent/${studentId}`,{},{withCredentials: true})
     },
     getTeachers : async () => {
         const res = await api.get(`/admin/getTeachers`,{withCredentials: true})
+        return res.data
+    },
+    getTeachersPaginated : async (page: number = 1, limit: number = 10) => {
+        const res = await api.get(`/admin/getTeachersPaginated`,{params: {page, limit}, withCredentials: true})
         return res.data
     },
     deleteTeacher : async (teacherId: string) =>{

@@ -72,6 +72,10 @@ export default function HomePageAdmin() {
     const {teacherBills} = await AdminServices.getSalary()
     setSalary(teacherBills) 
   }
+  const onclickUser = () => {
+    setTabActive('users');
+    
+  };
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#F8F2F9] to-[#CBABCF]">
       {/* HEADER */}
@@ -119,7 +123,7 @@ export default function HomePageAdmin() {
           </div>
 
           <div
-            onClick={() => setTabActive("users")}
+            onClick={() => onclickUser()}
             className={cn(
               "flex flex-col items-center gap-1 cursor-pointer",
               tabActive === "users" && "text-[#851385]",
