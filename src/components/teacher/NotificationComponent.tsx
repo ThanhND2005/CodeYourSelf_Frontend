@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Inbox, SendHorizontal } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -89,58 +90,62 @@ export default function NotificationPage() {
         </button>
       </div>
 
-      {/* Main Content Wrapper (Pinkish background) */}
-      <div className="bg-pink-100 rounded-2xl p-6 shadow-sm">
-        
+      {/* Main Content: 2 separate scrollable panels */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
         {/* Received Notifications */}
-        <div className="mb-8">
-          <h2 className="text-xl font-bold mb-4">Các thông báo đã nhận:</h2>
-          <div className="space-y-4">
-            {notifications?.filter(n => n.receiverId === teacher?.userId as string)?.map((notif) => (
-              <div key={notif.notificationId} className="bg-white rounded-xl p-5 flex justify-between items-start shadow-sm">
-                <div>
-                  
-                  <p className="font-semibold mb-1">Tiêu đề: <span className="font-normal">{notif.title}</span></p>
-                  <p className="font-semibold mb-1">Nội dung: <span className="font-normal">{notif.content}</span></p>
-                  <p className="font-semibold mt-2 text-sm">Ngày tạo: <span className="font-normal">{formatDate(notif.createdAt)}</span></p>
+        <div className="bg-pink-100 rounded-2xl p-6 shadow-sm flex flex-col">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Inbox className="w-5 h-5 text-pink-500" /> Thông báo đã nhận
+          </h2>
+          <div className="space-y-4 overflow-y-auto max-h-[480px] pr-1">
+            {notifications?.filter(n => n.receiverId === teacher?.userId as string)?.length === 0 ? (
+              <p className="text-center text-gray-500 py-10 bg-white/60 rounded-xl">Chưa có thông báo nào được nhận.</p>
+            ) : (
+              notifications?.filter(n => n.receiverId === teacher?.userId as string)?.map((notif) => (
+                <div key={notif.notificationId} className="bg-white rounded-xl p-5 flex justify-between items-start shadow-sm">
+                  <div className="flex-1 min-w-0 mr-3">
+                    <p className="font-semibold mb-1">Tiêu đề: <span className="font-normal">{notif.title}</span></p>
+                    <p className="font-semibold mb-1">Nội dung: <span className="font-normal">{notif.content}</span></p>
+                    <p className="font-semibold mt-2 text-sm text-gray-400">Ngày tạo: <span className="font-normal">{formatDate(notif.createdAt)}</span></p>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(notif.notificationId)}
+                    className="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg flex-shrink-0 transition-colors"
+                  >
+                    Xóa
+                  </button>
                 </div>
-                <button 
-                  onClick={() => handleDelete(notif.notificationId)}
-                  className="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-6 rounded-lg ml-4 transition-colors"
-                >
-                  Xóa
-                </button>
-              </div>
-            ))}
-          </div>
-          <div className="text-right mt-2">
-            <button className="text-purple-800 font-medium hover:underline text-sm">Xem tất cả</button>
+              ))
+            )}
           </div>
         </div>
 
         {/* Sent Notifications */}
-        <div>
-          <h2 className="text-xl font-bold mb-4">Các thông báo đã gửi:</h2>
-          <div className="space-y-4">
-            {notifications?.filter(n => n.senderId === teacher?.userId as string)?.map((notif) => (
-              <div key={notif.notificationId} className="bg-white rounded-xl p-5 flex justify-between items-start shadow-sm">
-                <div>
-                  
-                  <p className="font-semibold mb-1">Tiêu đề: <span className="font-normal">{notif.title}</span></p>
-                  <p className="font-semibold mb-1">Nội dung: <span className="font-normal">{notif.content}</span></p>
-                  <p className="font-semibold mt-2 text-sm">Ngày tạo: <span className="font-normal">{formatDate(notif.createdAt)}</span></p>
+        <div className="bg-purple-50 rounded-2xl p-6 shadow-sm flex flex-col">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <SendHorizontal className="w-5 h-5 text-purple-500" /> Thông báo đã gửi
+          </h2>
+          <div className="space-y-4 overflow-y-auto max-h-[480px] pr-1">
+            {notifications?.filter(n => n.senderId === teacher?.userId as string)?.length === 0 ? (
+              <p className="text-center text-gray-500 py-10 bg-white/60 rounded-xl">Chưa có thông báo nào được gửi.</p>
+            ) : (
+              notifications?.filter(n => n.senderId === teacher?.userId as string)?.map((notif) => (
+                <div key={notif.notificationId} className="bg-white rounded-xl p-5 flex justify-between items-start shadow-sm">
+                  <div className="flex-1 min-w-0 mr-3">
+                    <p className="font-semibold mb-1">Tiêu đề: <span className="font-normal">{notif.title}</span></p>
+                    <p className="font-semibold mb-1">Nội dung: <span className="font-normal">{notif.content}</span></p>
+                    <p className="font-semibold mt-2 text-sm text-gray-400">Ngày tạo: <span className="font-normal">{formatDate(notif.createdAt)}</span></p>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(notif.notificationId)}
+                    className="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg flex-shrink-0 transition-colors"
+                  >
+                    Xóa
+                  </button>
                 </div>
-                <button 
-                  onClick={() => handleDelete(notif.notificationId)}
-                  className="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-6 rounded-lg ml-4 transition-colors"
-                >
-                  Xóa
-                </button>
-              </div>
-            ))}
-          </div>
-          <div className="text-right mt-2">
-            <button className="text-purple-800 font-medium hover:underline text-sm">Xem tất cả</button>
+              ))
+            )}
           </div>
         </div>
 

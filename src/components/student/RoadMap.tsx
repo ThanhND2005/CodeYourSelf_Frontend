@@ -16,10 +16,8 @@ import {
 } from "lucide-react";
 import { StudentService } from "@/services/StudentService";
 import type { Course } from "@/types/course";
-
-// IMPORTS MỚI THÊM VÀO
-import PaymentDialog3 from "./PaymentDialog3"; // Nhớ trỏ lại đường dẫn đúng nhé
-import { useCourseStore } from "@/stores/useCourseStore"; // Thay đổi đường dẫn nếu cần
+import PaymentDialog3 from "./PaymentDialog3"; 
+import { useCourseStore } from "@/stores/useCourseStore"; 
 
 // --- 1. TYPES & MOCK DATA ---
 export interface RoadmapStep {
@@ -87,8 +85,8 @@ export default function StudentRoadmapSelected() {
   const [isLoadingCourses, setIsLoadingCourses] = useState(false);
   const [isSubmittingInvoice, setIsSubmittingInvoice] = useState(false);
 
-  // Lấy hàm setPayment từ Zustand store
-  const { setPayment } = useCourseStore(); // Thay 'as any' bằng type an toàn trong store của bạn
+ 
+  const { setPayment } = useCourseStore(); 
 
   const { watch, setValue, handleSubmit, formState: { errors } } = useForm<RoadmapFormValues>({
     resolver: zodResolver(roadmapSchema),
@@ -102,7 +100,7 @@ export default function StudentRoadmapSelected() {
   const selectedCoursesMap = watch("selectedCourses");
   const currentRoadmap = ROADMAPS.find((r) => r.id === selectedRoadmapId);
 
-  // Kiểm tra xem đã chọn đủ các bước chưa để hiển thị nút tương ứng
+  
   const requiredStepsCount = currentRoadmap?.steps.length || 0;
   const selectedStepsCount = Object.keys(selectedCoursesMap).length;
   const isCompleted = requiredStepsCount > 0 && selectedStepsCount === requiredStepsCount;
@@ -140,9 +138,9 @@ export default function StudentRoadmapSelected() {
   // Hàm xử lý xuất hóa đơn mới
   const onSubmit = async (data: RoadmapFormValues) => {
     setIsSubmittingInvoice(true);
-    console.log("Đã pass qua validation, đang gọi API..."); // <-- Thêm dòng này để check
+    console.log("Đã pass qua validation, đang gọi API..."); 
     
-    // Đặt payment = null để PaymentDialog3 hiển thị vòng xoay quay quay
+    
     setPayment(null);
 
     try {
@@ -218,9 +216,9 @@ export default function StudentRoadmapSelected() {
               // Bọc PaymentDialog3 vào nút khi đã điền đủ thông tin
               <PaymentDialog3>
                 <button
-                  type="button" // Thêm type="button" để tránh dính dáng đến form submit
+                  type="button" 
                   onClick={() => {
-                    // Truyền thẳng data hiện tại vào onSubmit thay vì dùng handleSubmit
+                  
                     onSubmit({
                       roadmapId: selectedRoadmapId,
                       selectedCourses: selectedCoursesMap
@@ -234,7 +232,7 @@ export default function StudentRoadmapSelected() {
                 </button>
               </PaymentDialog3>
             ) : (
-              // Trạng thái chưa hoàn thành, bấm vào hiện cảnh báo, không mở Dialog
+              
               <button
                 onClick={() => alert("Vui lòng hoàn thành việc chọn khóa học cho tất cả các bước trong lộ trình!")}
                 className="bg-[#d97706]/70 text-white px-8 py-3 rounded-full font-bold shadow-lg cursor-not-allowed flex items-center gap-2"

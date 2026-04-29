@@ -114,7 +114,6 @@ const MOCK_QUESTIONS: Question[] = [
     correctAnswer: "C",
     timestamp: 150,
   },
-  // Bài 3
   {
     questionId: "q-006",
     videoId: "vid-003",

@@ -42,21 +42,21 @@ interface CommentDialogProps {
 
 
 export default function CommentDialog({ open, onClose, courseId }: CommentDialogProps) {
-  // 1. STATE BÌNH LUẬN CHÍNH
+ 
   const {comments,setComment} = useTeacherStore()
   const {data : student} = useStudentInfor()
-  // 2. STATE PHẢN HỒI (Lưu trữ phản hồi theo commentId)
+  
   const [repliesMap, setRepliesMap] = useState<Record<string, ReplyMock[]>>({});
-  // Quản lý xem bình luận nào đang được mở form phản hồi
+  
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
 
-  // 3. CẤU HÌNH FORM BÌNH LUẬN
+  
   const commentForm = useForm<CommentFormValues>({
     resolver: zodResolver(commentSchema),
     defaultValues: { content: "" },
   });
 
-  // 4. CẤU HÌNH FORM PHẢN HỒI
+ 
   const replyForm = useForm<ReplyFormValues>({
     resolver: zodResolver(replySchema),
     defaultValues: { content: "" },
@@ -64,9 +64,9 @@ export default function CommentDialog({ open, onClose, courseId }: CommentDialog
 
   if (!open) return null;
 
-  // --- HÀM XỬ LÝ: KHI BẤM NÚT PHẢN HỒI ---
+  
   const handleOpenReply = async (commentId: string) => {
-    // Nếu bấm lại vào chính nó thì đóng lại
+    
     if (activeReplyId === commentId) {
       setActiveReplyId(null);
       replyForm.reset();
@@ -74,11 +74,11 @@ export default function CommentDialog({ open, onClose, courseId }: CommentDialog
     }
 
     setActiveReplyId(commentId);
-    replyForm.reset(); // Clear form mỗi khi mở bình luận khác
+    replyForm.reset(); 
 
-    // Giả lập gọi API lấy danh sách phản hồi khớp với mã bình luận (commentId)
+   
     if (!repliesMap[commentId]) {
-      // Hàm filter này mô phỏng câu query: SELECT * FROM Reply WHERE commentId = ?
+     
       const {replies} = await TeacherService.getReply(commentId)
       
       setRepliesMap((prev) => ({
@@ -120,7 +120,7 @@ export default function CommentDialog({ open, onClose, courseId }: CommentDialog
       console.error(error)
     }
 
-    // Cập nhật lại danh sách phản hồi của commentId đó
+   
 
     replyForm.reset();
   };

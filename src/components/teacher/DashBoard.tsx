@@ -55,7 +55,7 @@ export default function TeacherDashboardContent() {
         <div className="lg:col-span-2">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Khóa học của tôi</h2>
 
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 max-h-[600px] overflow-y-auto">
 
             {/* LỘ TRÌNH (MULTIPLE COURSES) */}
             <div className="mb-8">
@@ -131,7 +131,7 @@ export default function TeacherDashboardContent() {
         {/* 3. THÔNG BÁO - ĐĂNG KÝ MỚI */}
         <div className="lg:col-span-1">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Thông báo học viên mới</h2>
-          <div className="bg-[#FFD1E3] rounded-3xl p-6 shadow-sm border border-pink-100 h-full max-h-[800px] overflow-y-auto">
+          <div className="bg-[#FFD1E3] rounded-3xl p-6 shadow-sm border border-pink-100 max-h-[600px] overflow-y-auto">
             <div className="space-y-4">
               {notifications?.length === 0 ? (
                 <p className="text-center text-gray-500 py-10 bg-white/50 rounded-xl">Chưa có thông báo mới.</p>
