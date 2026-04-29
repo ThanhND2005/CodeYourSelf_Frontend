@@ -32,7 +32,6 @@ export default function SigninPageTeacher({
     resolver: zodResolver(SigninSchema),
   });
   const {signinTeacher} = useAuthStore()
-  const {setTeacher,setStudents,setSingleCourses,setMultipleCoures} =useTeacherStore()
   const navigate = useNavigate()
   const onSubmit = async (data: SigninFormValues) => {
     const {username,password} = data
@@ -42,14 +41,6 @@ export default function SigninPageTeacher({
       if(user)
       {
         const correctPath = getRedirectPath(user.role as string)
-        const {teacher} = await TeacherService.getInformation(user.userId)
-        const {students} = await TeacherService.getStudentsByTeacher(user.userId)
-        const {singleCourses} = await TeacherService.getSingleCourses(user.userId)
-        const {multipleCourses} = await TeacherService.getMultipleCourses(user.userId)
-        setStudents(students)
-        setTeacher(teacher)
-        setSingleCourses(singleCourses)
-        setMultipleCoures(multipleCourses)
         navigate(correctPath)
       }
     } catch (error) {

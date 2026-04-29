@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Inbox, SendHorizontal } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -22,7 +22,13 @@ type NotificationFormData = z.infer<typeof notificationSchema>;
 export default function NotificationPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const {teacher,notifications,setNotifications} = useTeacherStore()
-  
+  useEffect(()=>{
+    const fectNotificatoin  = async () =>{
+      const {notifications} = await TeacherService.getNotifications(teacher?.userId as string)
+      setNotifications(notifications)
+    }
+    fectNotificatoin()
+  },[])
   const {
     register,
     handleSubmit,

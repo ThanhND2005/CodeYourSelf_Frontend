@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Plus,
   Trash2,
@@ -24,7 +24,7 @@ import { TeacherService } from "@/services/TeacherService";
 import type { SingleCourse, Video } from "@/types/teacher";
 import { useTabTeacherStore } from "@/stores/useTabStore";
 
-// --- BƯỚC 1: ĐỊNH NGHĨA TYPES ---
+
 
 
 
@@ -37,11 +37,10 @@ interface MultipleCourse {
   rate: number;
   teacherId: string;
   imageUrl: string;
-  status: string; // Thêm trường status cho combo
+  status: string; 
 }
 
 
-// --- BƯỚC 2: ZOD SCHEMAS CHO VALIDATE FORM ---
 
 const multipleCourseschema = z.object({
   name: z.string().min(5, "Tên phải có ít nhất 5 ký tự"),
@@ -49,7 +48,7 @@ const multipleCourseschema = z.object({
   summary: z.string().min(10, "Mô tả phải có ít nhất 10 ký tự"),
 });
 
-// Schema cho Upload Video
+
 const videoUploadSchema = z.object({
   name: z.string().min(5, "Tiêu đề video ít nhất 5 ký tự"),
   videoFile: z
@@ -58,7 +57,7 @@ const videoUploadSchema = z.object({
     .refine(
       (files) => files?.[0]?.size <= 10000 * 1024 * 1024,
       "Dung lượng tối đa 10000MB.",
-    ) // Giới hạn 10000MB
+    ) 
     .refine(
       (files) =>
         ["video/mp4", "video/webm", "video/quicktime"].includes(
@@ -68,8 +67,8 @@ const videoUploadSchema = z.object({
     ),
 });
 
-// Schema đặc biệt cho việc upload file ảnh
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; 
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const imageUploadSchema = z.object({
@@ -86,7 +85,7 @@ const imageUploadSchema = z.object({
     ),
 });
 
-// Schema thêm câu hỏi vào video (theo DB: questionId, videoId, content, optionA-D, correctAnswer, timestamp)
+
 const questionSchema = z.object({
   content: z.string().min(5, "Nội dung câu hỏi ít nhất 5 ký tự"),
   optionA: z.string().min(1, "Không được để trống"),
@@ -114,7 +113,7 @@ type CourseFormData = z.infer<typeof multipleCourseschema>;
 type ImageUploadFormData = z.infer<typeof imageUploadSchema>;
 type VideoUploadFormData = z.infer<typeof videoUploadSchema>;
 
-// --- BƯỚC 3: COMPONENT ---
+
 
 export default function CourseManagementComponent() {
   const {
@@ -142,14 +141,14 @@ export default function CourseManagementComponent() {
   const [courseVideos, setCourseVideos] = useState<Video[]>([]);
   const [isLoadingProcess, setIsLoadingProcess] = useState(false);
 
-  // State lưu id khóa học đang được chọn để đổi ảnh
+  
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [targetImageUpload, setTargetImageUpload] = useState<{
     id: string;
     type: "single" | "combo";
   } | null>(null);
 
-  // --- THIẾT LẬP REACT-HOOK-FORM ---
+
   const createSingleForm = useForm<CourseFormData>({ resolver: zodResolver(multipleCourseschema) });
   const createMultiForm = useForm<CourseFormData>({ resolver: zodResolver(multipleCourseschema) });
   const editSingleForm = useForm<CourseFormData>({ resolver: zodResolver(multipleCourseschema) });
@@ -158,7 +157,15 @@ export default function CourseManagementComponent() {
   const imageForm = useForm<ImageUploadFormData>({ resolver: zodResolver(imageUploadSchema) });
   const questionForm = useForm<QuestionFormData>({ resolver: zodResolver(questionSchema) });
 
-  // --- HANDLERS XÓA / XEM CHI TIẾT ---
+  useEffect(()=>{
+    const fetchCourse = async () =>{
+      const {singleCourses} = await TeacherService.getSingleCourses(teacher?.userId as string)
+      const {multipleCourses} = await TeacherService.getMultipleCourses(teacher?.userId as string)
+      setSingleCourses(singleCourses)
+      setMultipleCoures(multipleCourses)
+    }
+    fetchCourse()
+  },[])
   const handleDeleteSingleCourse = async (courseId: string) => {
     try {
       await TeacherService.deleteCourse(courseId)
@@ -192,10 +199,10 @@ export default function CourseManagementComponent() {
 
   const handleViewMultiDetails = (multiCourse: MultipleCourse) => {
     console.log("Xem chi tiết combo:", multiCourse);
-    // TODO: Chuyển hướng hoặc mở Dialog xem chi tiết combo
+    
   };
 
-  // --- HANDLERS: UPLOAD ẢNH QUA RHF ---
+  
   const triggerImageUpload = (id: string, type: "single" | "combo") => {
     setTargetImageUpload({ id, type });
     if (fileInputRef.current) fileInputRef.current.click();
@@ -230,7 +237,7 @@ export default function CourseManagementComponent() {
 
   const { ref: rhfImageRef, onChange: rhfImageOnChange, ...rhfImageRest } = imageForm.register("file");
 
-  // --- HANDLERS: TẠO MỚI & CHỈNH SỬA ---
+  
   const onSubmitCreateSingle = async (data: CourseFormData) => {
     const { name, cost, summary } = data;
     try {

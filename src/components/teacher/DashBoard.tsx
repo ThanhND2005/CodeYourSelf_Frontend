@@ -4,15 +4,30 @@ import { Users, Library, Layers, BookOpen } from 'lucide-react';
 import { useTeacherStore } from '@/stores/useTeacherStore';
 import { useTabTeacherStore } from '@/stores/useTabStore';
 import { useNotificationCourse } from '@/hooks/useTeacher';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { TeacherService } from '@/services/TeacherService';
 
 
 
 
 export default function TeacherDashboardContent() {
   // --- STATES ---
-
+  const {setStudents,setTeacher,setSingleCourses,setMultipleCoures} = useTeacherStore()
   const { data: notifications } = useNotificationCourse()
-
+  const user = useAuthStore.getState().user
+  useEffect(() =>{
+    const fetchDashBoard = async () =>{
+      const {teacher} = await TeacherService.getInformation(user?.userId as string)
+      const {students} = await TeacherService.getStudentsByTeacher(user?.userId as string)
+      const {singleCourses} = await TeacherService.getSingleCourses(user?.userId as string)
+      const {multipleCourses} = await TeacherService.getMultipleCourses(user?.userId as string)
+      setStudents(students)
+      setTeacher(teacher)
+      setSingleCourses(singleCourses)
+      setMultipleCoures(multipleCourses)
+    }
+    fetchDashBoard()
+  },[])
 
   // --- EFFECTS ---
   const { setTabActive } = useTabTeacherStore()
