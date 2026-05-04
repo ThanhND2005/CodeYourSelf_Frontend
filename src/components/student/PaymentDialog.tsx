@@ -9,6 +9,7 @@ import { useCourseStore } from "@/stores/useCourseStore";
 import { useTabStudentStore } from "@/stores/useTabStore";
 import { LoaderCircle } from "lucide-react";
 import { useEffect } from "react";
+import { toast } from "sonner";
   
   interface PaymentDialogProps {
     children: React.ReactNode;
@@ -31,6 +32,7 @@ import { useEffect } from "react";
             console.log(payment.paymentId)
             const payment2 = await StudentService.getBillSingleCourse2(payment.paymentId)
             if(payment2 && payment2.status == "SUCCESS"){
+              toast.success('Thanh toán thành công')
               await StudentService.PaymentSucces(payment.paymentId)
               setTabActive('courselearning')
               clearInterval(interval)
